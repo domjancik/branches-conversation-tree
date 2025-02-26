@@ -3,9 +3,15 @@ import requests
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from data_model import db, AudioRecording, RecordingImageGeneration
-from typing import Optional, List, Dict
-from pydantic import BaseModel, field_validator
+from playhouse.shortcuts import model_to_dict
 import logging
+from data_api_models import (
+    AudioRecordingCreate,
+    TranscriptionUpdate,
+    PromptsUpdate,
+    ImageGenerationCreate,
+    ImageGenerationUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,78 +27,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-class AudioRecordingCreate(BaseModel):
-    audio_file_path: str
-    parent_audio_recording_id: Optional[int] = None
-    parent_time: Optional[float] = None
-
-    @field_validator("audio_file_path")
-    @classmethod
-    def validate_audio_file_path(cls, v):
-        if not v.strip():
-            raise ValueError("audio_file_path cannot be empty")
-        return v
-
-
-class TranscriptionUpdate(BaseModel):
-    transcription: str
-
-
-class PromptsUpdate(BaseModel):
-    prompts: List[str]
-
-
-class ImageGenerationCreate(BaseModel):
-    audio_recording_id: int
-    image_file_path: Optional[str] = None
-    seed: Optional[int] = None
-    request_payload: Optional[Dict] = None
-    prompt: str
-    status: str = "pending"
-    reason: Optional[str] = None
-
-    @field_validator("image_file_path")
-    @classmethod
-    def validate_image_file_path(cls, v):
-        if v is not None and not v.strip():
-            raise ValueError("image_file_path cannot be empty")
-        return v
-
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, v):
-        valid_statuses = ["pending", "generating", "completed", "failed"]
-        if v not in valid_statuses:
-            raise ValueError(f"status must be one of: {', '.join(valid_statuses)}")
-        return v
-
-
-class ImageGenerationUpdate(BaseModel):
-    image_file_path: Optional[str] = None
-    seed: Optional[int] = None
-    request_payload: Optional[Dict] = None
-    prompt: Optional[str] = None
-    status: Optional[str] = None
-    reason: Optional[str] = None
-    duration: Optional[float] = None
-
-    @field_validator("image_file_path")
-    @classmethod
-    def validate_image_file_path(cls, v):
-        if v is not None and not v.strip():
-            raise ValueError("image_file_path cannot be empty if provided")
-        return v
-
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, v):
-        if v is not None:
-            valid_statuses = ["pending", "generating", "completed", "failed"]
-            if v not in valid_statuses:
-                raise ValueError(f"status must be one of: {', '.join(valid_statuses)}")
-        return v
 
 
 AUDIO_PROCESSOR_URL = os.getenv("AUDIO_PROCESSOR_URL", "http://localhost:8001")
@@ -251,4 +185,18 @@ async def update_image_generation(
             }
     except Exception as e:
         logger.error(f"Error updating image generation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/recordings/{recording_id}/tree")
+async def get_recording_tree(recording_id: int):
+    """Get the tree of recordings for a given recording"""
+    try:
+        recording = AudioRecording.get_by_id(recording_id)
+        return [
+            model_to_dict(recording, recurse=False)
+            for recording in recording.get_tree()
+        ]
+    except Exception as e:
+        logger.error(f"Error getting recording tree: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

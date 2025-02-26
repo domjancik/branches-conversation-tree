@@ -60,4 +60,13 @@ public static class ConversationTreeDataAccess
         var responseJson = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<AudioRecordingResponse>(responseJson);
     }
+
+    public static async Task<List<AudioRecordingResponse>> GetRecordingTree(int recordingId)
+    {
+        var response = await httpClient.GetAsync($"/recordings/{recordingId}/tree");
+        response.EnsureSuccessStatusCode();
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<AudioRecordingResponse>>(responseJson);
+    }
 }
