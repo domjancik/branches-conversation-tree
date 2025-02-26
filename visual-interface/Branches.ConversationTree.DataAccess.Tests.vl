@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="PUkk6xUJvAxLfqawIjd2jf" LanguageVersion="2025.7.0-0091-g7e8b50a312" Version="0.128">
+  <NugetDependency Id="Dk1cgEOibbIP61MUTc7V72" Location="VL.CoreLib" Version="2025.7.0-0091-g7e8b50a312" />
+  <Patch Id="BjNp7AXZn0wMGyrQ1FcfnO">
+    <Canvas Id="OXEr6Gy2GCANckWHIx28b6" DefaultCategory="Branches.ConversationTree.DataAccess" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="CLxAMOV7tcUPjR3LlwpU93">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="V2TZzvq2Dk2QNExpicfW3J">
+        <Canvas Id="G6Loi8iHFqnOPZI6Poi1li" CanvasType="Group">
+          <Node Bounds="86,90,135,110" Id="EwGs80iOUkNQJRsyU7GXXc">
+            <p:NodeReference LastCategoryFullName="Primitive" LastDependency="Builtin">
+              <Choice Kind="StatefulRegion" Name="Region (Stateful)" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Primitive" />
+              <Choice Kind="ApplicationStatefulRegion" Name="If" />
+            </p:NodeReference>
+            <Pin Id="Q2tLR6vfhNrLKuBDHVWPDh" Name="Condition" Kind="InputPin" />
+            <Patch Id="Q3xGZ4e5r6xOFxCMoRX9GX" ManuallySortedPins="true">
+              <Patch Id="J3XV9gPXk0pQW1l4WCgFrK" Name="Create" ManuallySortedPins="true" />
+              <Patch Id="Dvoq3tI1LZYPGlo0Gd3TTM" Name="Then" ManuallySortedPins="true" />
+              <Node Bounds="98,122,111,19" Id="MxniCptujABLECBNN6233U">
+                <p:NodeReference LastCategoryFullName="Main.ConversationTreeDataAccess" LastDependency="Branches.ConversationTree.DataAccessUtils.csproj">
+                  <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                  <CategoryReference Kind="ClassType" Name="ConversationTreeDataAccess" />
+                  <Choice Kind="OperationCallFlag" Name="CreateNewRecording" />
+                </p:NodeReference>
+                <Pin Id="Hzb6fBKOJy5PGrvAMKc4Go" Name="Audio File Path" Kind="InputPin" />
+                <Pin Id="MLwqtxdDXU0N1ANLsfKmbx" Name="Parent Recording Id" Kind="InputPin" />
+                <Pin Id="R2iYk38xy2ZOto4V3aGmex" Name="Parent Time" Kind="InputPin" />
+                <Pin Id="PibgMfHx8y7OaYSxhBNCUw" Name="Result" Kind="OutputPin" />
+              </Node>
+              <Node Bounds="98,153,79,26" Id="VM3OPjyOFlyQV2ykslSCHW">
+                <p:NodeReference LastCategoryFullName="Reactive.Task" LastDependency="VL.CoreLib.vl">
+                  <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                  <CategoryReference Kind="ClassType" Name="Task" />
+                  <Choice Kind="OperationCallFlag" Name="ToObservable" />
+                </p:NodeReference>
+                <Pin Id="KEB6bJgahQMPL8yc6kg9qo" Name="Input" Kind="StateInputPin" />
+                <Pin Id="KIy5wfB5d5hNZouUkFwnAp" Name="Result" Kind="OutputPin" />
+              </Node>
+            </Patch>
+            <ControlPoint Id="T4AywAGQIiQMEZAbOH1MqD" Bounds="100,194" Alignment="Bottom" />
+            <ControlPoint Id="RFw7GHYb88IP3wuF8TybXg" Bounds="100,96" Alignment="Top" />
+          </Node>
+          <Pad Id="D4TeE5Zmm3lOO1zd7Qiert" Comment="Condition" Bounds="88,51,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="CniAAeJ13FTL4BdADOuO68" Comment="Audio File Path" Bounds="224,49,213,15" ShowValueBox="true" isIOBox="true" Value="Branch-Recording-2.wav">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="98,238,65,19" Id="U0ftQMsBDawNWb9mMyszkN">
+            <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="HoldLatest" />
+            </p:NodeReference>
+            <Pin Id="Kgj3dsE0VQ1L4nAFiy4xNF" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DPyiygcP9CKMwE2jataXfT" Name="Initial Result" Kind="InputPin" IsHidden="true" />
+            <Pin Id="AZkrwW2CH6MPOOGnPNmdgs" Name="Async Notifications" Kind="InputPin" />
+            <Pin Id="VorAJgaZoSvL6IiQJa6ti3" Name="Reset" Kind="InputPin" />
+            <Pin Id="UlNZ0pMYXGRQH4oOjI0Ecg" Name="Value" Kind="OutputPin" />
+            <Pin Id="EVriMSnGmG2NGCZTEnzuY1" Name="On Data" Kind="OutputPin" />
+          </Node>
+          <Pad Id="JRvsnJmL5LZLiEknRaISjv" Comment="" Bounds="100,289,213,138" ShowValueBox="true" isIOBox="true" />
+        </Canvas>
+        <Patch Id="Sh986IaWQCeN9JliXongsm" Name="Create" />
+        <Patch Id="LuTWt5d4hGYMKWdtUSoRdH" Name="Update" />
+        <ProcessDefinition Id="Nh5HAFlk8uhQdW2Lu1g4xt">
+          <Fragment Id="IhbVLF3iaYSLgFRBuyfP5f" Patch="Sh986IaWQCeN9JliXongsm" Enabled="true" />
+          <Fragment Id="E37jXgbQxhQPGOLzrKx1ij" Patch="LuTWt5d4hGYMKWdtUSoRdH" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="Qi4uKOs2Ut6N3H0b8t1Rlu" Ids="D4TeE5Zmm3lOO1zd7Qiert,Q2tLR6vfhNrLKuBDHVWPDh" />
+        <Link Id="SodKUaiyivRQWtC0OI2Eys" Ids="CniAAeJ13FTL4BdADOuO68,Hzb6fBKOJy5PGrvAMKc4Go" />
+        <Link Id="DyzwejsPAw9O6KVAKUo6Df" Ids="RFw7GHYb88IP3wuF8TybXg,T4AywAGQIiQMEZAbOH1MqD" IsFeedback="true" />
+        <Link Id="LO3mal1qRp8PEarcoxYyVp" Ids="PibgMfHx8y7OaYSxhBNCUw,KEB6bJgahQMPL8yc6kg9qo" />
+        <Link Id="LiNQocZiCynP9lppg51PTH" Ids="KIy5wfB5d5hNZouUkFwnAp,T4AywAGQIiQMEZAbOH1MqD" />
+        <Link Id="FNBwXPVI4OOM7ybvbwdTUE" Ids="T4AywAGQIiQMEZAbOH1MqD,AZkrwW2CH6MPOOGnPNmdgs" />
+        <Link Id="GLYyXNzc9HtOYSae4lhDf0" Ids="UlNZ0pMYXGRQH4oOjI0Ecg,JRvsnJmL5LZLiEknRaISjv" />
+      </Patch>
+    </Node>
+  </Patch>
+  <ProjectDependency Id="B3NzVI2vdlwNrbYGi423cu" Location="./csharp/Branches.ConversationTree.DataAccessUtils/Branches.ConversationTree.DataAccessUtils.csproj" />
+  <DocumentDependency Id="E0i60n0gPn8Pi787W5RX1i" Location="./Branches.ConversationTree.DataAccess.vl" />
+</Document>

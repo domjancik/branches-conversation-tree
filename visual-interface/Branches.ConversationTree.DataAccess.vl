@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="LtuaOjtREYBMiS7se9sL8z" LanguageVersion="2025.7.0-0091-g7e8b50a312" Version="0.128">
+  <NugetDependency Id="Dk1cgEOibbIP61MUTc7V72" Location="VL.CoreLib" Version="2025.7.0-0091-g7e8b50a312" />
+  <Patch Id="BjNp7AXZn0wMGyrQ1FcfnO">
+    <Canvas Id="OXEr6Gy2GCANckWHIx28b6" DefaultCategory="Branches.ConversationTree.DataAccess" CanvasType="FullCategory">
+      <!--
+
+    ************************ AudioRecording ************************
+
+-->
+      <Node Name="AudioRecording" Bounds="93,93" Id="LK9QOLhnbw9Pcg2THt6CPs">
+        <p:NodeReference>
+          <Choice Kind="RecordDefinition" />
+        </p:NodeReference>
+        <Patch Id="Gq0KxAKSfjBMHI4XYio3f9">
+          <Canvas Id="Idu3ZyycwHULW4dDxjBi0A" CanvasType="Group">
+            <Pad Id="MbL1FLk0cssMZbLvgCUPCK" SlotId="MYieXpC37JpOxbIUZSF7z0" Bounds="60,81" />
+            <Pad Id="IWOXXuNlEVBObhI2YdeEQ7" SlotId="NPtSnj0EohtLBiZvmkEMho" Bounds="143,81" />
+            <Pad Id="UZf73aPIEbALlUKxlZ7dPp" SlotId="I2N5uWGYnwoObfXDJgzr3w" Bounds="375,81" />
+            <Pad Id="RIMzMohlK4hOoA6u6S1mZc" SlotId="P4XkJd3jj9FPUvwJKpMcjy" Bounds="253,81" />
+            <ControlPoint Id="ExuAOv1T0EpPlXbdubhDwa" Bounds="60,51" />
+            <ControlPoint Id="IXyNshP6LO0L0vdpXE6WFo" Bounds="60,111" />
+            <ControlPoint Id="Q7I7YMKFG0kPbVJjGRN2I1" Bounds="143,51" />
+            <ControlPoint Id="PSCyqcKX57yOYx123PcXG1" Bounds="143,111" />
+            <ControlPoint Id="PYZdyls8Y8lP4ILmfO41it" Bounds="253,51" />
+            <ControlPoint Id="UAIFeibCuVhNIURspU0evs" Bounds="253,111" />
+            <ControlPoint Id="JZNJGFeVk2EMv4ARhzWsaW" Bounds="375,51" />
+            <ControlPoint Id="P3V8pziPADEPL5V0LI9c4s" Bounds="375,111" />
+          </Canvas>
+          <Patch Id="ACJYJ3Gw5EoN3oQI3K1evX" Name="Create">
+            <Pin Id="DfwjtxpW7w1ONPki7z9NT0" Name="Id" Kind="InputPin" />
+            <Pin Id="NpZEbcfRchtPvGzBczQ9q1" Name="ParentId" Kind="InputPin" />
+            <Pin Id="Q5j3BElSk0dOz6741iUW9q" Name="ParentTime" Kind="InputPin" />
+            <Pin Id="MaMYxbFMnLyPgDuauepcsH" Name="AudioFilePath" Kind="InputPin" />
+          </Patch>
+          <ProcessDefinition Id="FMrDXOE4VpKM8mxKgS7dk9" IsHidden="true">
+            <Fragment Id="VtDZ9fdejpGN5UeXPjs4jQ" Patch="ACJYJ3Gw5EoN3oQI3K1evX" Enabled="true" />
+            <Fragment Id="NVTDmynkGMxLyOS6BbfqD8" Patch="ANt9XAat2lBPgTPdkyU57t" />
+          </ProcessDefinition>
+          <Slot Id="MYieXpC37JpOxbIUZSF7z0" Name="Id">
+            <p:TypeAnnotation p:Type="TypeReference">
+              <Choice Kind="TypeFlag" Name="Optional" />
+              <p:TypeArguments>
+                <TypeReference>
+                  <Choice Kind="TypeFlag" Name="Integer32" />
+                </TypeReference>
+              </p:TypeArguments>
+            </p:TypeAnnotation>
+          </Slot>
+          <Slot Id="NPtSnj0EohtLBiZvmkEMho" Name="ParentId">
+            <p:TypeAnnotation p:Type="TypeReference">
+              <Choice Kind="TypeFlag" Name="Optional" />
+              <p:TypeArguments>
+                <TypeReference>
+                  <Choice Kind="TypeFlag" Name="Integer32" />
+                </TypeReference>
+              </p:TypeArguments>
+            </p:TypeAnnotation>
+          </Slot>
+          <Slot Id="I2N5uWGYnwoObfXDJgzr3w" Name="AudioFilePath">
+            <p:TypeAnnotation p:Type="TypeReference">
+              <Choice Kind="TypeFlag" Name="Optional" />
+              <p:TypeArguments>
+                <TypeReference>
+                  <Choice Kind="TypeFlag" Name="String" />
+                </TypeReference>
+              </p:TypeArguments>
+            </p:TypeAnnotation>
+          </Slot>
+          <Slot Id="P4XkJd3jj9FPUvwJKpMcjy" Name="ParentTime">
+            <p:TypeAnnotation p:Type="TypeReference">
+              <Choice Kind="TypeFlag" Name="Optional" />
+              <p:TypeArguments>
+                <TypeReference>
+                  <Choice Kind="TypeFlag" Name="Float32" />
+                </TypeReference>
+              </p:TypeArguments>
+            </p:TypeAnnotation>
+          </Slot>
+          <Link Id="Vb5ehMo54UTLNDn1Lp4qLC" Ids="DfwjtxpW7w1ONPki7z9NT0,ExuAOv1T0EpPlXbdubhDwa" IsHidden="true" />
+          <Link Id="BBGqvxaxzPoMPwCttEz8uz" Ids="ExuAOv1T0EpPlXbdubhDwa,MbL1FLk0cssMZbLvgCUPCK" />
+          <Patch Id="ANt9XAat2lBPgTPdkyU57t" Name="Split">
+            <Pin Id="DT4KPYMb7fyPUXQryH08zG" Name="Id" Kind="OutputPin" />
+            <Pin Id="BfITgBFbpLaOWgkrbwh3T9" Name="ParentId" Kind="OutputPin" />
+            <Pin Id="TBfJ3SnLRxMPFmW2QBoqW8" Name="ParentTime" Kind="OutputPin" />
+            <Pin Id="Abrrzje7T2AOOYSS6r37CG" Name="AudioFilePath" Kind="OutputPin" />
+          </Patch>
+          <Link Id="RnYVwC5vcOgNBZPKq4eok2" Ids="IXyNshP6LO0L0vdpXE6WFo,DT4KPYMb7fyPUXQryH08zG" IsHidden="true" />
+          <Link Id="SBnaglsdO9ULcSTwkHoiti" Ids="MbL1FLk0cssMZbLvgCUPCK,IXyNshP6LO0L0vdpXE6WFo" />
+          <Link Id="Uc0B4t7DKLFMwXRXXWFVvP" Ids="NpZEbcfRchtPvGzBczQ9q1,Q7I7YMKFG0kPbVJjGRN2I1" IsHidden="true" />
+          <Link Id="SfzOW9S31qFO2J0moMC2iB" Ids="Q7I7YMKFG0kPbVJjGRN2I1,IWOXXuNlEVBObhI2YdeEQ7" />
+          <Link Id="AVVVL7lZcSbPiAiiiW07TO" Ids="PSCyqcKX57yOYx123PcXG1,BfITgBFbpLaOWgkrbwh3T9" IsHidden="true" />
+          <Link Id="H3wNZ9omUa6NClBEx5jDYW" Ids="IWOXXuNlEVBObhI2YdeEQ7,PSCyqcKX57yOYx123PcXG1" />
+          <Link Id="EcksnrJLs1nLKEur5M4I9J" Ids="Q5j3BElSk0dOz6741iUW9q,PYZdyls8Y8lP4ILmfO41it" IsHidden="true" />
+          <Link Id="TgjPr6qTTYqLfQ3D1YToNU" Ids="PYZdyls8Y8lP4ILmfO41it,RIMzMohlK4hOoA6u6S1mZc" />
+          <Link Id="NeHWtE0TrZpPW26XeEF5vI" Ids="UAIFeibCuVhNIURspU0evs,TBfJ3SnLRxMPFmW2QBoqW8" IsHidden="true" />
+          <Link Id="JNUwOCSc6w4OlmCNa7OvUe" Ids="RIMzMohlK4hOoA6u6S1mZc,UAIFeibCuVhNIURspU0evs" />
+          <Link Id="Df4Khp5GztVQLdRyKaBluC" Ids="MaMYxbFMnLyPgDuauepcsH,JZNJGFeVk2EMv4ARhzWsaW" IsHidden="true" />
+          <Link Id="CBNMVPD1ck4PIByQ72kSis" Ids="JZNJGFeVk2EMv4ARhzWsaW,UZf73aPIEbALlUKxlZ7dPp" />
+          <Link Id="E2fkWqFzDBMO06c8saorJj" Ids="P3V8pziPADEPL5V0LI9c4s,Abrrzje7T2AOOYSS6r37CG" IsHidden="true" />
+          <Link Id="Hi6GBwbaQQLLS1QMNoJezR" Ids="UZf73aPIEbALlUKxlZ7dPp,P3V8pziPADEPL5V0LI9c4s" />
+        </Patch>
+      </Node>
+    </Canvas>
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="CLxAMOV7tcUPjR3LlwpU93">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="V2TZzvq2Dk2QNExpicfW3J">
+        <Canvas Id="G6Loi8iHFqnOPZI6Poi1li" CanvasType="Group" />
+        <Patch Id="Sh986IaWQCeN9JliXongsm" Name="Create" />
+        <Patch Id="LuTWt5d4hGYMKWdtUSoRdH" Name="Update" />
+        <ProcessDefinition Id="Nh5HAFlk8uhQdW2Lu1g4xt">
+          <Fragment Id="IhbVLF3iaYSLgFRBuyfP5f" Patch="Sh986IaWQCeN9JliXongsm" Enabled="true" />
+          <Fragment Id="E37jXgbQxhQPGOLzrKx1ij" Patch="LuTWt5d4hGYMKWdtUSoRdH" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+  <ProjectDependency Id="B3NzVI2vdlwNrbYGi423cu" Location="./csharp/Branches.ConversationTree.DataAccessUtils/Branches.ConversationTree.DataAccessUtils.csproj" />
+</Document>

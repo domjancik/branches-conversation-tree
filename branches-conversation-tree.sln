@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "visual-interface", "visual-interface", "{B3042D56-48FD-73D3-4819-A29A6009E5CB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csharp", "csharp", "{E78E9709-82FD-DE19-2E25-916EACD03A0D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Branches.ConversationTree.DataAccessUtils", "visual-interface\csharp\Branches.ConversationTree.DataAccessUtils\Branches.ConversationTree.DataAccessUtils.csproj", "{785C2BA4-73C3-7B1E-32F9-8778B5B0CB77}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{785C2BA4-73C3-7B1E-32F9-8778B5B0CB77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{785C2BA4-73C3-7B1E-32F9-8778B5B0CB77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{785C2BA4-73C3-7B1E-32F9-8778B5B0CB77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{785C2BA4-73C3-7B1E-32F9-8778B5B0CB77}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E78E9709-82FD-DE19-2E25-916EACD03A0D} = {B3042D56-48FD-73D3-4819-A29A6009E5CB}
+		{785C2BA4-73C3-7B1E-32F9-8778B5B0CB77} = {E78E9709-82FD-DE19-2E25-916EACD03A0D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {49B78DC2-B985-40C4-91C3-212DFD9F1B9B}
+	EndGlobalSection
+EndGlobal
