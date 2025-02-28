@@ -197,6 +197,8 @@ async def get_recording_tree(recording_id: int):
             model_to_dict(recording, recurse=False)
             for recording in recording.get_tree()
         ]
+    except AudioRecording.DoesNotExist:
+        raise HTTPException(status_code=404, detail=f"Recording {recording_id} not found")
     except Exception as e:
         logger.error(f"Error getting recording tree: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
