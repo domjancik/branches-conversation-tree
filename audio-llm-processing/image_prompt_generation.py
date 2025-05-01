@@ -2,13 +2,15 @@ import ollama
 import json
 from typing import List
 
+PROMPT_COUNT = 6
+
 def get_image_prompts(text: str, ollama_model: str = "llama3.1:8b", max_retries: int = 3) -> List[str]:
     retries = 0
     while retries < max_retries:
         try:
             model = ollama.generate(
                 model=ollama_model,
-                prompt=f"Generate 10 image prompts for the following text: {text}. Respond in a JSON array format only, no other text.",
+                prompt=f"Generate {PROMPT_COUNT} image prompts for the following text: {text}. Respond in a JSON array format only, no other text.",
                 stream=False
             )
             print(model.response)
