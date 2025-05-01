@@ -42,6 +42,10 @@ def generate_image(prompt: str, styles: list[str]):
         "aspect_ratios_selection": "1024*1024",
         "performance_selection": "Extreme Speed",
         "style_selections": styles,
+        "advanced_params": {
+            "overwrite_step": 4,
+            "overwrite_switch": 1,
+        }
     }
     result = text2img(params)
     logger.info(json.dumps(result, indent=4))
