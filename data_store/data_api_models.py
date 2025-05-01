@@ -72,3 +72,14 @@ class ImageGenerationUpdate(BaseModel):
             if v not in valid_statuses:
                 raise ValueError(f"status must be one of: {', '.join(valid_statuses)}")
         return v
+
+
+class BatchImageGenerationCreate(BaseModel):
+    generations: List[ImageGenerationCreate]
+
+    @field_validator("generations")
+    @classmethod
+    def validate_generations(cls, v):
+        if not v:
+            raise ValueError("generations list cannot be empty")
+        return v

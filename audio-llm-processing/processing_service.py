@@ -5,7 +5,7 @@ import whisper
 from data_client import (
     update_transcription,
     update_prompts,
-    create_image_generation,
+    create_image_generations_batch,
     update_image_generation,
     ImageGenerationUpdate,
     ImageGenerationCreate,
@@ -92,15 +92,16 @@ class AudioProcessingService:
             except Exception as e:
                 logger.error(f"Queue processing error: {str(e)}", exc_info=True)
 
-    def _create_pending_image_generation(self, recording_id: str, prompt: str):
-        image_generation_id = create_image_generation(
-            recording_id,
+    def _create_pending_image_generations(self, recording_id: str, prompts: list[str]):
+        image_generations = [
             ImageGenerationCreate(
                 audio_recording_id=recording_id,
                 prompt=prompt,
-            ),
-        )
-        return image_generation_id
+            )
+            for prompt in prompts
+        ]
+        image_generation_ids = create_image_generations_batch(recording_id, image_generations)
+        return list(zip(image_generation_ids, prompts))
 
     def _store_image(
         self,
@@ -119,14 +120,9 @@ class AudioProcessingService:
         return file_name
 
     def _generate_and_store_images(self, recording_id, prompts: list[str]):
-        image_generation_id_prompt_pairs = [
-            (self._create_pending_image_generation(recording_id, prompt), prompt)
-            for prompt in prompts
-        ]
+        image_generation_id_prompt_pairs = self._create_pending_image_generations(recording_id, prompts)
 
-        for index, (image_generation_id, prompt) in enumerate(
-            image_generation_id_prompt_pairs
-        ):
+        for index, (image_generation_id, prompt) in enumerate(image_generation_id_prompt_pairs):
             logger.info(
                 f"Generating image {index}/{len(prompts)} for {recording_id}, image generation id: {image_generation_id}"
             )
@@ -144,8 +140,8 @@ class AudioProcessingService:
                         request_payload=image_result.request_payload,
                         status="completed",
                         duration=image_result.duration,
-                        ),
-                    )
+                    ),
+                )
             except Exception as e:
                 logger.error(
                     f"Error generating image {index}/{len(prompts)} for {recording_id}, image generation id: {image_generation_id}: {str(e)}",
@@ -159,7 +155,6 @@ class AudioProcessingService:
                         reason=str(e),
                     ),
                 )
-
 
     def _process_audio(self, recording_id: str, source_file: str):
         logger.info(f"Starting transcription for {recording_id} from {source_file}")

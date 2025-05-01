@@ -37,6 +37,15 @@ def create_image_generation(recording_id: str, image_generation: ImageGeneration
     print(response.json())
     return response.json()["id"]
 
+def create_image_generations_batch(recording_id: str, image_generations: list[ImageGenerationCreate]):
+    request_payload = {
+        "generations": [gen.model_dump() for gen in image_generations]
+    }
+    response = requests.post(url=f"{host}/recordings/{recording_id}/image-generations/batch", json=request_payload)
+    print('Created image generations response:')
+    print(response.json())
+    return [gen["id"] for gen in response.json()]
+
 class ImageGenerationUpdate(BaseModel):
     image_file_path: Optional[str] = None
     seed: Optional[int] = None

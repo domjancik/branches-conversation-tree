@@ -11,6 +11,7 @@ from data_api_models import (
     PromptsUpdate,
     ImageGenerationCreate,
     ImageGenerationUpdate,
+    BatchImageGenerationCreate,
 )
 
 logger = logging.getLogger(__name__)
@@ -201,4 +202,40 @@ async def get_recording_tree(recording_id: int):
         raise HTTPException(status_code=404, detail=f"Recording {recording_id} not found")
     except Exception as e:
         logger.error(f"Error getting recording tree: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/recordings/{recording_id}/image-generations/batch")
+async def create_image_generations_batch(recording_id: int, batch: BatchImageGenerationCreate):
+    """Create multiple image generation entries for an audio recording in a single transaction"""
+    try:
+        # Verify the audio recording exists
+        try:
+            AudioRecording.get_by_id(recording_id)
+        except AudioRecording.DoesNotExist:
+            raise HTTPException(status_code=404, detail="Audio recording not found")
+
+        created_generations = []
+        with db.atomic():
+            for gen in batch.generations:
+                db_image_generation = RecordingImageGeneration(
+                    audio_recording_id=recording_id,
+                    prompt=gen.prompt,
+                    image_file_path=gen.image_file_path,
+                    seed=gen.seed,
+                    request_payload=gen.request_payload,
+                    status=gen.status,
+                )
+                db_image_generation.save()
+                created_generations.append({
+                    "id": db_image_generation.id,
+                    "audio_recording_id": recording_id,
+                    "status": db_image_generation.status,
+                    "created_date": db_image_generation.created_date.isoformat(),
+                    "updated_date": db_image_generation.updated_date.isoformat(),
+                })
+
+            return created_generations
+    except Exception as e:
+        logger.error(f"Error creating batch image generations: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
