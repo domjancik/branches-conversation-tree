@@ -37,7 +37,7 @@ ollama_model = os.getenv("OLLAMA_MODEL")
 MAX_QUEUE_SIZE = 1000  # Maximum number of items in each queue
 MAX_RETRIES = 3  # Maximum number of retries for failed image generations
 RETRY_DELAY = 5  # Delay in seconds between retries
-
+SECONDS_PER_PROMPT = 3  # Number of seconds in audio to generate one prompt
 
 def get_image_file_name(file_base_name: str, image_generation_id: str, index: int, style: str):
     iso_date = datetime.now().isoformat()
@@ -244,7 +244,7 @@ class AudioProcessingService:
         update_transcription(recording_id, transcription)
 
         # Generate image prompts
-        prompt_count = math.ceil(duration / 5)
+        prompt_count = math.ceil(duration / SECONDS_PER_PROMPT)
         logger.info(f"Generating {prompt_count} image prompts for {recording_id}")
         prompts = get_image_prompts(transcription, ollama_model, prompt_count)
         logger.info(f"Updating prompts for {recording_id}")
