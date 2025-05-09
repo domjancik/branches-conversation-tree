@@ -4,13 +4,13 @@ from typing import List
 
 PROMPT_COUNT = 6
 
-def get_image_prompts(text: str, ollama_model: str = "llama3.1:8b", max_retries: int = 4) -> List[str]:
+def get_image_prompts(text: str, ollama_model: str = "llama3.1:8b", prompt_count: int = PROMPT_COUNT, max_retries: int = 4) -> List[str]:
     retries = 0
     while retries < max_retries:
         try:
             model = ollama.generate(
                 model=ollama_model,
-                prompt=f"Generate {PROMPT_COUNT} image prompts for the following text: {text}. Respond in a JSON string array format only, no other text.",
+                prompt=f"Generate {prompt_count} image prompts for the following text: {text}. Respond in a JSON string array format only, no other text.",
                 stream=False
             )
             print(model.response)

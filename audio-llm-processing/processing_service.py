@@ -1,7 +1,9 @@
-from queue import Queue
+from queue import Queue, PriorityQueue
 import threading
-from typing import Optional
+import math
+from typing import Optional, Tuple
 import whisper
+import librosa
 from data_client import (
     update_transcription,
     update_prompts,
@@ -16,6 +18,8 @@ from datetime import datetime
 import logging
 import os
 from dotenv import load_dotenv
+import time
+from collections import defaultdict
 
 load_dotenv()
 
@@ -29,6 +33,11 @@ image_generations_path = os.getenv("IMAGE_GENERATIONS_PATH")
 audio_recordings_path = os.getenv("AUDIO_RECORDINGS_PATH")
 ollama_model = os.getenv("OLLAMA_MODEL")
 
+# Configuration
+MAX_QUEUE_SIZE = 1000  # Maximum number of items in each queue
+MAX_RETRIES = 3  # Maximum number of retries for failed image generations
+RETRY_DELAY = 5  # Delay in seconds between retries
+
 
 def get_image_file_name(file_base_name: str, image_generation_id: str, index: int, style: str):
     iso_date = datetime.now().isoformat()
@@ -40,10 +49,13 @@ def get_image_file_name(file_base_name: str, image_generation_id: str, index: in
 class AudioProcessingService:
     def __init__(self):
         logger.info("Initializing AudioProcessingService")
-        self.processing_queue = Queue()
+        self.new_recording_queue = Queue(maxsize=MAX_QUEUE_SIZE)  # Queue for new recording requests
+        self.image_generation_queue = PriorityQueue(maxsize=MAX_QUEUE_SIZE)  # Queue for image generation tasks
         self.whisper_model: Optional[whisper.Whisper] = None
         self.is_running = False
-        self.processing_thread: Optional[threading.Thread] = None
+        self.recording_thread: Optional[threading.Thread] = None
+        self.image_thread: Optional[threading.Thread] = None
+        self.metrics = defaultdict(lambda: {"count": 0, "total_time": 0})  # Track processing metrics
 
     def start(self):
         if self.is_running:
@@ -53,32 +65,48 @@ class AudioProcessingService:
 
         self.is_running = True
         self.whisper_model = whisper.load_model("medium")
-        self.processing_thread = threading.Thread(target=self._process_queue)
-        self.processing_thread.daemon = True
-        self.processing_thread.start()
+        
+        # Start separate threads for recording processing and image generation
+        self.recording_thread = threading.Thread(target=self._process_recordings)
+        self.recording_thread.daemon = True
+        self.recording_thread.start()
+        
+        self.image_thread = threading.Thread(target=self._process_image_generations)
+        self.image_thread.daemon = True
+        self.image_thread.start()
 
     def stop(self):
         logger.info("Stopping AudioProcessingService")
         self.is_running = False
-        if self.processing_thread:
-            self.processing_queue.put(None)  # Sentinel to stop the thread
-            self.processing_thread.join()
+        if self.recording_thread:
+            self.new_recording_queue.put(None)  # Sentinel to stop the thread
+            self.recording_thread.join()
+        if self.image_thread:
+            self.image_generation_queue.put((float('inf'), None))  # Sentinel to stop the thread
+            self.image_thread.join()
         self.whisper_model = None
 
     def add_processing_request(self, recording_id: str, source_file: str):
-        self.processing_queue.put((recording_id, source_file))
+        try:
+            # Add to new recording queue for immediate processing
+            self.new_recording_queue.put((recording_id, source_file), block=False)
+            logger.info(f"Added recording {recording_id} to processing queue")
+        except Queue.Full:
+            logger.error(f"Recording queue is full, could not add recording {recording_id}")
+            raise
 
-    def _process_queue(self):
+    def _process_recordings(self):
         while self.is_running:
             try:
-                item = self.processing_queue.get()
+                item = self.new_recording_queue.get()
                 if item is None:  # Sentinel value to stop the thread
-                    logger.info("Received stop signal, stopping processing thread")
+                    logger.info("Received stop signal, stopping recording processing thread")
                     break
 
                 recording_id, source_file = item
+                start_time = time.time()
                 logger.info(
-                    f"Processing audio file {source_file} for recording {recording_id}"
+                    f"Processing new recording {recording_id} from {source_file}"
                 )
                 try:
                     self._process_audio(recording_id, source_file)
@@ -88,11 +116,45 @@ class AudioProcessingService:
                         f"Error processing {recording_id}: {str(e)}", exc_info=True
                     )
                 finally:
-                    self.processing_queue.task_done()
+                    self.new_recording_queue.task_done()
+                    # Update metrics
+                    duration = time.time() - start_time
+                    self.metrics["recording_processing"]["count"] += 1
+                    self.metrics["recording_processing"]["total_time"] += duration
             except Exception as e:
-                logger.error(f"Queue processing error: {str(e)}", exc_info=True)
+                logger.error(f"Recording queue processing error: {str(e)}", exc_info=True)
 
-    def _create_pending_image_generations(self, recording_id: str, prompts: list[str]):
+    def _process_image_generations(self):
+        while self.is_running:
+            try:
+                priority, item = self.image_generation_queue.get()
+                if item is None:  # Sentinel value to stop the thread
+                    logger.info("Received stop signal, stopping image generation thread")
+                    break
+
+                recording_id, prompt, image_generation_id = item
+                start_time = time.time()
+                logger.info(
+                    f"Generating image for recording {recording_id}, prompt index {priority}"
+                )
+                try:
+                    self._generate_and_store_image(recording_id, prompt, image_generation_id, priority)
+                    logger.info(f"Successfully generated image for {recording_id}, prompt index {priority}")
+                except Exception as e:
+                    logger.error(
+                        f"Error generating image for {recording_id}, prompt index {priority}: {str(e)}",
+                        exc_info=True,
+                    )
+                finally:
+                    self.image_generation_queue.task_done()
+                    # Update metrics
+                    duration = time.time() - start_time
+                    self.metrics["image_generation"]["count"] += 1
+                    self.metrics["image_generation"]["total_time"] += duration
+            except Exception as e:
+                logger.error(f"Image generation queue processing error: {str(e)}", exc_info=True)
+
+    def _create_pending_image_generations(self, recording_id: str, prompts: list[str]) -> list[Tuple[str, str]]:
         image_generations = [
             ImageGenerationCreate(
                 audio_recording_id=recording_id,
@@ -119,14 +181,9 @@ class AudioProcessingService:
 
         return file_name
 
-    def _generate_and_store_images(self, recording_id, prompts: list[str]):
-        image_generation_id_prompt_pairs = self._create_pending_image_generations(recording_id, prompts)
-
-        for index, (image_generation_id, prompt) in enumerate(image_generation_id_prompt_pairs):
-            logger.info(
-                f"Generating image {index}/{len(prompts)} for {recording_id}, image generation id: {image_generation_id}"
-            )
-
+    def _generate_and_store_image(self, recording_id: str, prompt: str, image_generation_id: str, index: int):
+        retries = 0
+        while retries < MAX_RETRIES:
             try:
                 image_result = generate_image(prompt + prompt_suffix, STYLES)
                 file_name = self._store_image(recording_id, image_generation_id, index, image_result)
@@ -142,39 +199,81 @@ class AudioProcessingService:
                         duration=image_result.duration,
                     ),
                 )
+                break  # Success, exit retry loop
+                
             except Exception as e:
-                logger.error(
-                    f"Error generating image {index}/{len(prompts)} for {recording_id}, image generation id: {image_generation_id}: {str(e)}",
-                    exc_info=True,
-                )
-                update_image_generation(
-                    recording_id,
-                    image_generation_id,
-                    ImageGenerationUpdate(
-                        status="failed",
-                        reason=str(e),
-                    ),
-                )
+                retries += 1
+                if retries == MAX_RETRIES:
+                    logger.error(
+                        f"Error generating image for {recording_id}, prompt index {index} after {MAX_RETRIES} retries: {str(e)}",
+                        exc_info=True,
+                    )
+                    update_image_generation(
+                        recording_id,
+                        image_generation_id,
+                        ImageGenerationUpdate(
+                            status="failed",
+                            reason=str(e),
+                        ),
+                    )
+                else:
+                    logger.warning(
+                        f"Retry {retries}/{MAX_RETRIES} for image {index} for {recording_id}: {str(e)}"
+                    )
+                    time.sleep(RETRY_DELAY)
+
+    def _get_audio_duration(self, file_path: str) -> float:
+        """Get the duration of an audio file in seconds."""
+        try:
+            duration = librosa.get_duration(path=file_path)
+            return duration
+        except Exception as e:
+            logger.error(f"Error getting audio duration for {file_path}: {str(e)}", exc_info=True)
+            return 0.0
 
     def _process_audio(self, recording_id: str, source_file: str):
         logger.info(f"Starting transcription for {recording_id} from {source_file}")
         source_file_path = os.path.join(audio_recordings_path, source_file)
+        
+        # Get audio duration before processing
+        duration = self._get_audio_duration(source_file_path)
+        logger.info(f"Audio duration for {recording_id}: {duration:.2f} seconds")
+        
         transcription = self._transcribe_audio(source_file_path)
-        logger.info(f"Transcription complete for {recording_id}, updating database")
+        logger.info(f"Transcription complete for {recording_id}, updating database. Transcription: {transcription}")
         update_transcription(recording_id, transcription)
 
-        logger.info(f"Generating image prompts for {recording_id}")
-        prompts = get_image_prompts(transcription, ollama_model)
+        # Generate image prompts
+        prompt_count = math.ceil(duration / 5)
+        logger.info(f"Generating {prompt_count} image prompts for {recording_id}")
+        prompts = get_image_prompts(transcription, ollama_model, prompt_count)
         logger.info(f"Updating prompts for {recording_id}")
         update_prompts(recording_id, prompts)
         logger.info(f"Processing complete for {recording_id}")
 
-        logger.info(f"Generating images for {recording_id}")
-        self._generate_and_store_images(recording_id, prompts)
-        logger.info(f"Images generated for {recording_id}")
+        # Create pending image generations and queue each prompt individually
+        image_generation_id_prompt_pairs = self._create_pending_image_generations(recording_id, prompts)
+        for index, (image_generation_id, prompt) in enumerate(image_generation_id_prompt_pairs):
+            # Queue each prompt with its index as priority
+            self.image_generation_queue.put((index, (recording_id, prompt, image_generation_id)))
 
     def _transcribe_audio(self, source_file: str) -> str:
         result = self.whisper_model.transcribe(
             source_file, language="en", task="translate"
         )
         return result["text"]
+
+    def get_metrics(self):
+        """Get current processing metrics"""
+        return {
+            "recording_queue_size": self.new_recording_queue.qsize(),
+            "image_queue_size": self.image_generation_queue.qsize(),
+            "recording_processing": {
+                "count": self.metrics["recording_processing"]["count"],
+                "avg_time": self.metrics["recording_processing"]["total_time"] / max(1, self.metrics["recording_processing"]["count"])
+            },
+            "image_generation": {
+                "count": self.metrics["image_generation"]["count"],
+                "avg_time": self.metrics["image_generation"]["total_time"] / max(1, self.metrics["image_generation"]["count"])
+            }
+        }
