@@ -10,7 +10,7 @@ def get_image_prompts(text: str, ollama_model: str = "llama3.1:8b", prompt_count
         try:
             model = ollama.generate(
                 model=ollama_model,
-                prompt=f"Generate {prompt_count} image prompts for the following text: {text}. Respond in a JSON string array format only, no other text.",
+                prompt=f"Generate {prompt_count} image prompts for the following text: {text}. Respond in a JSON string array format only `[\"prompt1\", \"prompt2\", ...]`, no other text.",
                 stream=False
             )
             print(model.response)
