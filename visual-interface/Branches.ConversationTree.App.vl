@@ -10958,7 +10958,7 @@
             <Pin Id="Lhn9cVmrnsYMtAwEyQQynb" Name="Input 2" Kind="InputPin" />
             <Pin Id="Tt57U8v1xNQLFdx1Lmb1y4" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="OEAOq8ZDN4INNlpr4w9kQv" Comment="Auto Follow camera" Bounds="-20,-679,35,35" ShowValueBox="true" isIOBox="true" Value="False">
+          <Pad Id="OEAOq8ZDN4INNlpr4w9kQv" Comment="Auto Follow camera" Bounds="-20,-679,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
