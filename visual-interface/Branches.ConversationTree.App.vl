@@ -2198,7 +2198,7 @@
                 <Choice Kind="TypeFlag" Name="RGBA" />
               </p:TypeAnnotation>
             </Pad>
-            <Node Bounds="860,-140,135,19" Id="FzYHPEMSiDSOyoko1bevgL">
+            <Node Bounds="823,-190,135,19" Id="FzYHPEMSiDSOyoko1bevgL">
               <p:NodeReference LastCategoryFullName="Main.Channels" LastDependency="Branches.ConversationTree.App.vl">
                 <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                 <Choice Kind="ProcessAppFlag" Name="AudioMeterGlobalChannel" />
@@ -2556,6 +2556,16 @@
               <Pin Id="LeStHUb214jOBHSXULfc6E" Name="Scalar" Kind="InputPin" />
               <Pin Id="Cer9WbyJQz3P7QjZNYhu83" Name="Output" Kind="OutputPin" />
             </Node>
+            <ControlPoint Id="K4RpJljDOojLyalinlqr0P" Bounds="1015,-210" />
+            <Node Bounds="1004,60,25,19" Id="LLXV5ExhCUaLzTzdYgSZJy">
+              <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="+" />
+              </p:NodeReference>
+              <Pin Id="Dhbik2k2yPULaQ1XduF9tx" Name="Input" Kind="InputPin" />
+              <Pin Id="JCVX2xDuVNmON6oNgCRbQ0" Name="Input 2" Kind="InputPin" />
+              <Pin Id="On8eIvnGlqsLk0PO2cqo3w" Name="Output" Kind="OutputPin" />
+            </Node>
           </Canvas>
           <Patch Id="D1n7FL6f3q6PEX9YLbKGnZ" Name="Create" />
           <Patch Id="QrTrFV61HVDQcO3bvYALvs" Name="Update">
@@ -2578,6 +2588,7 @@
             </Pin>
             <Pin Id="AIvQY7LSQFMPTi6jHsxlSr" Name="Duration" Kind="InputPin" />
             <Pin Id="I7mt6VuEWw1QYs4yN5w27w" Name="Color" Kind="InputPin" />
+            <Pin Id="FM8Gc12pczCNIZ5wJiRskU" Name="Brightness Baseline" Kind="InputPin" />
             <Pin Id="DBNYz6ypUnpQa1WVXySsj5" Name="Is Active" Kind="InputPin">
               <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
                 <Choice Kind="TypeFlag" Name="Boolean" />
@@ -2627,11 +2638,10 @@
           <Link Id="ShDpNSEVxi2NxNRjfeDx9r" Ids="RlyCsMp23QnPWAm1e9FlCn,IcNxZdbkrH4OXESHyOay6T" />
           <Link Id="Sv6jwyVIiJ6M8dw5yqTETL" Ids="CtQm4vVDkSJPI8s9Pwv4kV,VXFqDfAYtWnLKqcwCF0VQ4" />
           <Link Id="Ig3NxM9Yh3pM65LMLYJd30" Ids="CUMEPX8tiSnL6FpQP9vOkq,TAszaKtfbJUP23N3ZEoP0D" />
-          <Link Id="GtPiEuBXaJTMBZ0wF6MxHw" Ids="FhtIONZOuStL0nZDq3eYEH,RVk6TnfkocuNBxBHBWDynN" />
           <Link Id="Eb5DgPktBXzQFpiTAfNVNz" Ids="CTr6Lv11ohkNbCzvx2SPcx,U3I5EhEeoUhLj524IXSTji" />
           <Link Id="SPEB5LQ639OQZmqvlEhZfX" Ids="PoMQo2n9eYwL2N86fRgbs5,KLXpSj2mnP8PLpgvstxFsw" />
           <Link Id="HO4cXh2VxEtPi1kk218FCN" Ids="DBNYz6ypUnpQa1WVXySsj5,PoMQo2n9eYwL2N86fRgbs5" IsHidden="true" />
-          <Link Id="K3wYXeiIIRjP3sstizXpjI" Ids="TKxefOoovJfNCanYh2AGbz,C3Hbsk7LbjIK9lIwvNaSfg" />
+          <Link Id="K3wYXeiIIRjP3sstizXpjI" Ids="TKxefOoovJfNCanYh2AGbz,Dhbik2k2yPULaQ1XduF9tx" />
           <Link Id="DfNOL5RjMKMLv6jvrJzD3r" Ids="QcIRgZl3MRGMyJTP5xR1va,GUyi0Bg6pKnO2vzqtzMwJQ" />
           <Link Id="T0YmxDGN83uL0qisyVrgax" Ids="HUl3GHMGK7nLhPVXlUR45D,Pwjj0uuMZbSOmsEjuSp8om" />
           <Link Id="M8yR61FJo2uLwhyifrcwmV" Ids="KqRFhNxIQ6EOTsE9ciblBG,Es32aXQzjC1Pv0iAamWCCj" />
@@ -2667,7 +2677,6 @@
           <Link Id="G6Qm1CkMNFAQHSvYHTU5pI" Ids="EqwaLgiy9QqMwAFcKi6pEa,Grt7e3T60pHMb5sZ2CCceZ" />
           <Link Id="JfkQrySQGETO6E7QnmEKR4" Ids="P1OPhAVRCTbO8fy5Kv75sp,EdqTdTOvKuvNxxzhcksvZm" />
           <Link Id="LintIUNNN0POCJJN9A4Q2c" Ids="HQyeAeILUjVMjiGu0FohYu,L72IF96eud4OIqEyADaDGq" />
-          <Link Id="TTvTtA27ZGmLs4O8v0TSO1" Ids="FhtIONZOuStL0nZDq3eYEH,OUoAy3te2YeMx0wdnhxzm7" />
           <Link Id="QTWKf84FbBDMvzc7C5Hmgy" Ids="S48c0AarFL6PZbR5fLZU6x,J4whOZRXApbP0AylY71WLu" />
           <Link Id="VFlnRC5MIe0PpuO3KCWjSI" Ids="HQyeAeILUjVMjiGu0FohYu,USRP8rOpBvqOQlSTP4O1QB" />
           <Link Id="P2nnniVJEl7ML8Cuzhk5LT" Ids="SbGbB9pJtE1O5UmoXiwmdx,EfniEcQrh4MNBTdjW5myvQ" />
@@ -2684,6 +2693,11 @@
           <Link Id="QNX320qjWH5PV34NHmr99E" Ids="TgMWRwujSpNObnQXPLoruc,TTdV4PRTVopMrO2sCH3Kwy" />
           <Link Id="GiqEHvVPRV1PoMoC1XSdiA" Ids="Vq5upFDibt5PPj1JND7baQ,Ic12epSDa3gLWdTbch7QVX" />
           <Link Id="Cu6V6FLVPfjPQwOb5D8Cvd" Ids="H6eYJRKztWTPkMb0bkdquR,QDsuW3wDrlcN5W7iUPfUwE" />
+          <Link Id="H3YbcjeR3IDLZynOSmTa9v" Ids="FM8Gc12pczCNIZ5wJiRskU,K4RpJljDOojLyalinlqr0P" IsHidden="true" />
+          <Link Id="P0R9xVNuQKaNJtj4SpsRJr" Ids="On8eIvnGlqsLk0PO2cqo3w,C3Hbsk7LbjIK9lIwvNaSfg" />
+          <Link Id="DmQwP4moHNpQMtRGyQHoZw" Ids="K4RpJljDOojLyalinlqr0P,JCVX2xDuVNmON6oNgCRbQ0" />
+          <Link Id="H8ecrNrJFK5PPAQ1ikh2de" Ids="FhtIONZOuStL0nZDq3eYEH,OUoAy3te2YeMx0wdnhxzm7" />
+          <Link Id="PFVSDR9eeuvLFcl2MIcdoO" Ids="FhtIONZOuStL0nZDq3eYEH,RVk6TnfkocuNBxBHBWDynN" />
         </Patch>
       </Node>
       <!--
@@ -3096,6 +3110,7 @@
                       <Pin Id="JsOZfrWbkeIQBupyzMOBxt" Name="Current Position" Kind="InputPin" />
                       <Pin Id="G4hhyFkaOynOS2gVkE4Ony" Name="Duration" Kind="InputPin" />
                       <Pin Id="MZvZwk4ZVd7OHnhQrHaasg" Name="Color" Kind="InputPin" />
+                      <Pin Id="UWsFCKNTfgaLKS5fI30fMn" Name="Brightness Baseline" Kind="InputPin" />
                       <Pin Id="MCkiBlsam6RPHAZ8oYindz" Name="Is Active" Kind="InputPin" />
                     </Node>
                   </Patch>
@@ -3533,7 +3548,7 @@
                   <Patch Id="CBf5gTh5s6hORtVbhaBR5l" ManuallySortedPins="true">
                     <Patch Id="VoeJFzr7XkDNaV9So2fNXB" Name="Create" ManuallySortedPins="true" />
                     <Patch Id="KcAgjnBwhNwO6AuBzd9Egl" Name="Then" ManuallySortedPins="true" />
-                    <Node Bounds="716,2299,117,19" Id="Jd36VfEpiefPx2aN9t8v0w">
+                    <Node Bounds="716,2340,125,19" Id="Jd36VfEpiefPx2aN9t8v0w">
                       <p:NodeReference LastCategoryFullName="Main" LastDependency="Branches-TreeConversation-SpiralPrototype-AddingInteraction.vl">
                         <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                         <Choice Kind="ProcessAppFlag" Name="BranchWaveformEntity" />
@@ -3545,7 +3560,8 @@
                       <Pin Id="Byt6nTZEvPgNrYauqQ2jEe" Name="Current Position" Kind="InputPin" />
                       <Pin Id="OxNy7zjRBA4Pe9oGh3zuOn" Name="Duration" Kind="InputPin" />
                       <Pin Id="NOfDFE6KGO8O2YsT1CZHp8" Name="Color" Kind="InputPin" />
-                      <Pin Id="FzlCCs9Sd36LDaIVKHdxTc" Name="Is Active" Kind="InputPin" />
+                      <Pin Id="JdyQO7tk2KxOmPcY2tOCME" Name="Brightness Baseline" Kind="InputPin" DefaultValue="3.19" />
+                      <Pin Id="FzlCCs9Sd36LDaIVKHdxTc" Name="Is Active" Kind="InputPin" DefaultValue="True" />
                     </Node>
                     <Node Bounds="889,2420,140,19" Id="OmDpBTCQPQmOqfrUf67May">
                       <p:NodeReference LastCategoryFullName="Main.Channels" LastDependency="Branches.ConversationTree.App.vl">
@@ -3777,7 +3793,7 @@
                   <Pin Id="JOt7qE9HbsdLGAhisz642G" Name="Phase" Kind="InputPin" />
                   <Pin Id="B7JNHbKi1hHPEovReQVfKy" Name="Output" Kind="OutputPin" />
                 </Node>
-                <Node Bounds="828,2270,87,19" Id="EyEGuEb3iToNEDYImZKEkj">
+                <Node Bounds="806,2290,87,19" Id="EyEGuEb3iToNEDYImZKEkj">
                   <p:NodeReference LastCategoryFullName="Main.Constants" LastDependency="Branches.ConversationTree.App.vl">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                     <Choice Kind="OperationCallFlag" Name="RecordingColor" />
