@@ -3526,7 +3526,7 @@
                       <Pin Id="Byt6nTZEvPgNrYauqQ2jEe" Name="Current Position" Kind="InputPin" />
                       <Pin Id="OxNy7zjRBA4Pe9oGh3zuOn" Name="Duration" Kind="InputPin" />
                       <Pin Id="NOfDFE6KGO8O2YsT1CZHp8" Name="Color" Kind="InputPin" />
-                      <Pin Id="JdyQO7tk2KxOmPcY2tOCME" Name="Brightness Baseline" Kind="InputPin" DefaultValue="4.26" />
+                      <Pin Id="JdyQO7tk2KxOmPcY2tOCME" Name="Brightness Baseline" Kind="InputPin" DefaultValue="4.42" />
                       <Pin Id="FzlCCs9Sd36LDaIVKHdxTc" Name="Is Active" Kind="InputPin" DefaultValue="True" />
                     </Node>
                     <Node Bounds="889,2420,140,19" Id="OmDpBTCQPQmOqfrUf67May">
