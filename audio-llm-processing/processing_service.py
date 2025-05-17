@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 STYLES = ["Mk Gyotaku", "Mk Luminogram"]
 
 prompt_suffix = os.getenv("PROMPT_SUFFIX")
+prompt_template = os.getenv("PROMPT_TEMPLATE")
+negative_prompt = os.getenv("NEGATIVE_PROMPT")
 image_generations_path = os.getenv("IMAGE_GENERATIONS_PATH")
 audio_recordings_path = os.getenv("AUDIO_RECORDINGS_PATH")
 ollama_model = os.getenv("OLLAMA_MODEL")
@@ -37,7 +39,7 @@ ollama_model = os.getenv("OLLAMA_MODEL")
 MAX_QUEUE_SIZE = 1000  # Maximum number of items in each queue
 MAX_RETRIES = 3  # Maximum number of retries for failed image generations
 RETRY_DELAY = 5  # Delay in seconds between retries
-SECONDS_PER_PROMPT = 3  # Number of seconds in audio to generate one prompt
+SECONDS_PER_PROMPT = int(os.getenv("SECONDS_PER_PROMPT")) # Number of seconds in audio to generate one prompt
 
 def get_image_file_name(file_base_name: str, image_generation_id: str, index: int, style: str):
     iso_date = datetime.now().isoformat()
@@ -185,7 +187,8 @@ class AudioProcessingService:
         retries = 0
         while retries < MAX_RETRIES:
             try:
-                image_result = generate_image(prompt + prompt_suffix, STYLES)
+                prompt = prompt_template.format(prompt=prompt)
+                image_result = generate_image(prompt, STYLES, negative_prompt)
                 file_name = self._store_image(recording_id, image_generation_id, index, image_result)
 
                 update_image_generation(
