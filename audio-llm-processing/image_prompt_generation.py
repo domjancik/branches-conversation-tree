@@ -4,17 +4,23 @@ from typing import List
 
 PROMPT_COUNT = 6
 
+# Configure ollama client to use localhost
+ollama_client = ollama.Client(host='http://localhost:11434')
+
+def clean_response(response: str) -> str:
+    return response.replace("```json", "").replace("```", "")
+
 def get_image_prompts(text: str, ollama_model: str = "llama3.1:8b", prompt_count: int = PROMPT_COUNT, max_retries: int = 4) -> List[str]:
     retries = 0
     while retries < max_retries:
         try:
-            model = ollama.generate(
+            model = ollama_client.generate(
                 model=ollama_model,
                 prompt=f"Generate {prompt_count} image prompts for the following text: {text}. Respond in a JSON string array format only `[\"prompt1\", \"prompt2\", ...]`, no other text.",
                 stream=False
             )
             print(model.response)
-            parsed_response = json.loads(model.response)
+            parsed_response = json.loads(clean_response(model.response))
 
             # Validate the response format
             if not isinstance(parsed_response, list) or not all(isinstance(item, str) for item in parsed_response):

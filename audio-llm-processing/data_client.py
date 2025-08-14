@@ -2,7 +2,7 @@ import requests
 import json
 import os
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -77,3 +77,31 @@ def update_image_generation(
         data=image_generation.model_dump_json(),
     )
     print(response.json())
+
+
+def get_recording_tree(recording_id: str, only_parents: bool = False, max_depth: Optional[int] = None, fields: Optional[str] = None) -> List[Dict]:
+    """Get the tree of recordings for a given recording ID."""
+    params = {
+        "only_parents": only_parents,
+        "max_depth": max_depth,
+        "fields": fields
+    }
+    # Remove None values
+    params = {k: v for k, v in params.items() if v is not None}
+    
+    response = requests.get(
+        url=f"{host}/recordings/{recording_id}/tree",
+        params=params
+    )
+    return response.json()
+
+
+def get_parent_context(recording_id: str, max_depth: Optional[int] = None) -> Dict:
+    """Get the context from parent recordings for a given recording ID."""
+    params = {"max_depth": max_depth} if max_depth is not None else {}
+    
+    response = requests.get(
+        url=f"{host}/recordings/{recording_id}/parent-context",
+        params=params
+    )
+    return response.json()

@@ -1,7 +1,7 @@
 import os
 import requests
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from data_model import db, AudioRecording, RecordingImageGeneration
 from playhouse.shortcuts import model_to_dict
 import logging
@@ -13,6 +13,7 @@ from data_api_models import (
     ImageGenerationUpdate,
     BatchImageGenerationCreate,
 )
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -190,18 +191,67 @@ async def update_image_generation(
 
 
 @app.get("/recordings/{recording_id}/tree")
-async def get_recording_tree(recording_id: int):
+async def get_recording_tree(
+    recording_id: int,
+    only_parents: bool = Query(False, description="Only return parent recordings"),
+    max_depth: Optional[int] = Query(None, description="Maximum depth of the tree to return"),
+    fields: Optional[str] = Query(None, description="Comma-separated list of fields to return")
+):
     """Get the tree of recordings for a given recording"""
     try:
         recording = AudioRecording.get_by_id(recording_id)
-        return [
-            model_to_dict(recording, recurse=False)
-            for recording in recording.get_tree()
-        ]
+        tree = recording.get_tree()
+        
+        # Filter to only parents if requested
+        if only_parents:
+            tree = [r for r in tree if r.id != recording_id]
+        
+        # Convert to dict and filter fields if specified
+        result = [model_to_dict(r, recurse=False) for r in tree]
+        if fields:
+            field_list = [f.strip() for f in fields.split(",")]
+            result = [{k: v for k, v in r.items() if k in field_list} for r in result]
+            
+        return result
     except AudioRecording.DoesNotExist:
         raise HTTPException(status_code=404, detail=f"Recording {recording_id} not found")
     except Exception as e:
         logger.error(f"Error getting recording tree: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/recordings/{recording_id}/parent-context")
+async def get_parent_context(
+    recording_id: int,
+    max_depth: Optional[int] = Query(None, description="Maximum depth of parent context to return")
+):
+    """Get the context from parent recordings for a given recording"""
+    try:
+        recording = AudioRecording.get_by_id(recording_id)
+        tree = recording.get_tree()
+        
+        # Filter to only parents and sort by created_date
+        parents = [r for r in tree if r.id != recording_id]
+        parents.sort(key=lambda x: x.created_date)
+        
+        # Get transcriptions from parent recordings
+        context = []
+        for parent in parents:
+            if parent.transcription:
+                context.append({
+                    "id": parent.id,
+                    "created_date": parent.created_date.isoformat(),
+                    "transcription": parent.transcription
+                })
+        
+        return {
+            "recording_id": recording_id,
+            "parent_context": context
+        }
+    except AudioRecording.DoesNotExist:
+        raise HTTPException(status_code=404, detail=f"Recording {recording_id} not found")
+    except Exception as e:
+        logger.error(f"Error getting parent context: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

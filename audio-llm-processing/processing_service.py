@@ -1,7 +1,7 @@
 from queue import Queue, PriorityQueue
 import threading
 import math
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Dict
 import whisper
 import librosa
 from data_client import (
@@ -11,6 +11,8 @@ from data_client import (
     update_image_generation,
     ImageGenerationUpdate,
     ImageGenerationCreate,
+    get_recording_tree,
+    get_parent_context,
 )
 from image_prompt_generation import get_image_prompts
 from image_generation import generate_image, ImageGenerationResult
@@ -234,6 +236,26 @@ class AudioProcessingService:
             logger.error(f"Error getting audio duration for {file_path}: {str(e)}", exc_info=True)
             return 0.0
 
+    def _get_parent_context(self, recording_id: str) -> str:
+        """Get the context from parent recordings."""
+        try:
+            response = get_parent_context(recording_id)
+            parent_contexts = response["parent_context"]
+            
+            if not parent_contexts:
+                return ""
+            
+            # Combine transcriptions from parent recordings
+            context = "\n".join([
+                f"Previous recording: {ctx['transcription']}"
+                for ctx in parent_contexts
+            ])
+            
+            return context
+        except Exception as e:
+            logger.error(f"Error getting parent context for {recording_id}: {str(e)}", exc_info=True)
+            return ""
+
     def _process_audio(self, recording_id: str, source_file: str):
         logger.info(f"Starting transcription for {recording_id} from {source_file}")
         source_file_path = os.path.join(audio_recordings_path, source_file)
@@ -245,6 +267,12 @@ class AudioProcessingService:
         transcription = self._transcribe_audio(source_file_path)
         logger.info(f"Transcription complete for {recording_id}, updating database. Transcription: {transcription}")
         update_transcription(recording_id, transcription)
+
+        # Get parent context
+        parent_context = self._get_parent_context(recording_id)
+        if parent_context:
+            logger.info(f"Found parent context for {recording_id}")
+            transcription = f"{parent_context}\n\nCurrent recording: {transcription}"
 
         # Generate image prompts
         prompt_count = math.ceil(duration / SECONDS_PER_PROMPT)
