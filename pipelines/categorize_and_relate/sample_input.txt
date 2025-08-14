@@ -1,0 +1,7 @@
+This project note mentions:
+- Define a few categories
+- Explore relationships
+- Note any open questions
+
+We should consider how to group ideas logically, track dependencies, and identify next steps.
+
