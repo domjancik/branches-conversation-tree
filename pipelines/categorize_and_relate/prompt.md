@@ -17,7 +17,15 @@ Output format:
       "category": "<short label>",
       "summary": "<1-2 sentence description>",
       "confidence": <0.0–1.0>,
-      "connections": ["<id>", "..."]
+      "connections": ["<id>", "..."],
+      "text_ranges": [
+        {
+          "start_char": <character index>,
+          "end_char": <character index>,
+          "excerpt": "<relevant text snippet>",
+          "relevance": <0.0–1.0>
+        }
+      ]
     }
   ],
   "connections_summary": [

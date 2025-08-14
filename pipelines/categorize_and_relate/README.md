@@ -62,11 +62,18 @@ Advanced
   - PS: `./run.ps1 -InputPath .\sample_input.txt -Model "gemma3:4b" -Temperature 0 -Seed 42`
   - Py: `python .\run.py --input .\sample_input.txt --model gemma3:4b --temperature 0 --seed 42`
 
+Text Range Features
+- Each segment includes `text_ranges` array with character positions for visual highlighting
+- Python script validates and enhances text ranges with fuzzy matching
+- Supports trimming audio recordings and visual annotation of transcripts
+- Provides `actual_text` and `corrected_*` fields for range validation
+
 Notes
 - The Python runner uses the Ollama SDK. It will try to extract clean JSON from the model output by:
   1) Parsing a ```json fenced block if present, else
   2) Parsing the first {...} JSON object found.
   If neither works, it writes the raw output.
+- Text ranges are validated and corrected when possible for accuracy
 - Both scripts return non-zero exit codes and print error output if `ollama generate` fails.
 - Stdout contains the model response unless `-OutputPath/--output` is provided.
 

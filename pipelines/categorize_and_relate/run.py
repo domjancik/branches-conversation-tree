@@ -240,8 +240,63 @@ def main(argv: list[str]) -> int:
                 pass
         return None
 
+    def _enhance_text_ranges(result_json: str, original_text: str) -> str:
+        """Validate and enhance text ranges with fuzzy matching if needed."""
+        try:
+            data = json.loads(result_json)
+            if "segments" not in data:
+                return result_json
+                
+            for segment in data["segments"]:
+                if "text_ranges" not in segment:
+                    continue
+                    
+                for text_range in segment["text_ranges"]:
+                    start_char = text_range.get("start_char")
+                    end_char = text_range.get("end_char")
+                    excerpt = text_range.get("excerpt", "")
+                    
+                    # Validate ranges are within bounds
+                    if start_char is not None and end_char is not None:
+                        start_char = max(0, min(start_char, len(original_text)))
+                        end_char = max(start_char, min(end_char, len(original_text)))
+                        text_range["start_char"] = start_char
+                        text_range["end_char"] = end_char
+                        
+                        # Extract actual text at those positions
+                        actual_text = original_text[start_char:end_char]
+                        text_range["actual_text"] = actual_text
+                        
+                        # If excerpt doesn't match, try fuzzy search
+                        if excerpt and excerpt.strip() not in actual_text:
+                            # Simple fuzzy search for the excerpt in nearby text
+                            search_start = max(0, start_char - 100)
+                            search_end = min(len(original_text), end_char + 100)
+                            search_area = original_text[search_start:search_end]
+                            
+                            # Find best match for excerpt in search area
+                            excerpt_lower = excerpt.lower().strip()
+                            best_pos = search_area.lower().find(excerpt_lower)
+                            if best_pos != -1:
+                                # Adjust ranges to actual found position
+                                actual_start = search_start + best_pos
+                                actual_end = actual_start + len(excerpt)
+                                text_range["corrected_start_char"] = actual_start
+                                text_range["corrected_end_char"] = actual_end
+                                text_range["corrected_text"] = original_text[actual_start:actual_end]
+            
+            return json.dumps(data, ensure_ascii=False, indent=2)
+        except Exception as e:
+            # If enhancement fails, return original
+            return result_json
+
     cleaned = _extract_clean_json(output)
-    final_out = cleaned if cleaned is not None else output
+    if cleaned is not None:
+        # Enhance with text range validation
+        enhanced = _enhance_text_ranges(cleaned, input_text)
+        final_out = enhanced
+    else:
+        final_out = output
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
