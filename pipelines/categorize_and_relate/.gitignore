@@ -1,0 +1,12 @@
+# Pipeline output files
+result*.json
+output*.json
+*.output.json
+
+# Test files
+long_text.txt
+test_*.txt
+
+# Python cache
+__pycache__/
+*.pyc
