@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/images', express.static('C:\\Users\\magne\\Documents\\Branches-ConversationTree\\image_generations'));
-app.use('/audio', express.static('C:\\Users\\magne\\Documents\\Branches-ConversationTree'));
+app.use('/audio', express.static('C:\\Users\\magne\\Documents\\Branches-ConversationTree\\audio_recordings'));
 
 // Database connection
 const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY, (err) => {
