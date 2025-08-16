@@ -243,6 +243,23 @@ main {
     cursor: pointer;
 }
 
+/* Node inline images */
+.node-image {
+    border-radius: 4px;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.node-image:hover {
+    border-color: #3498db;
+    transform: scale(1.05);
+}
+
+.node-image.error {
+    display: none;
+}
+
 .node circle {
     fill: #fff;
     stroke: #3498db;
@@ -276,6 +293,17 @@ main {
 .node.has-children.selected circle {
     fill: #e74c3c;
     stroke: #c0392b;
+}
+
+/* Node thumbnail images */
+.node-thumbnail {
+    border-radius: 3px;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.node-thumbnail:hover {
+    opacity: 0.8 !important;
 }
 
 .link {
