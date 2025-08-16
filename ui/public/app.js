@@ -9,7 +9,7 @@ class ConversationTreeApp {
         this.currentRootIndex = 0;
         this.width = 0;
         this.height = 0;
-        this.margin = { top: 20, right: 120, bottom: 20, left: 120 };
+        this.margin = { top: 40, right: 40, bottom: 40, left: 40 };
         this.nodeRadius = 8;
         this.duration = 750;
         this.nodeCounter = 0;
@@ -64,13 +64,13 @@ class ConversationTreeApp {
         this.g = this.svg.append('g')
             .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
 
-        // Setup tree layout
-        this.tree = d3.tree().size([this.height, this.width]);
+        // Setup tree layout - for vertical orientation, width and height are swapped
+        this.tree = d3.tree().size([this.width, this.height]);
 
         // Create root from first tree (assuming there's at least one root)
         if (this.data.roots && this.data.roots.length > 0) {
             this.root = d3.hierarchy(this.data.roots[0], d => d.children);
-            this.root.x0 = this.height / 2;
+            this.root.x0 = this.width / 2;
             this.root.y0 = 0;
 
             // Collapse children initially
@@ -98,7 +98,7 @@ class ConversationTreeApp {
 
         const nodeEnter = node.enter().append('g')
             .attr('class', 'node')
-            .attr('transform', d => `translate(${this.root.y0},${this.root.x0})`)
+            .attr('transform', d => `translate(${this.root.x0},${this.root.y0})`)
             .on('click', (event, d) => this.nodeClick(event, d))
             .on('mouseover', (event, d) => this.showTooltip(event, d))
             .on('mouseout', () => this.hideTooltip());
@@ -109,9 +109,9 @@ class ConversationTreeApp {
             .style('cursor', 'pointer');
 
         nodeEnter.append('text')
-            .attr('dy', '.35em')
-            .attr('x', d => d.children || d._children ? -13 : 13)
-            .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+            .attr('dy', '1.5em')
+            .attr('x', 0)
+            .attr('text-anchor', 'middle')
             .text(d => this.truncateText(d.data.name, 15))
             .style('fill-opacity', 1e-6);
 
@@ -119,7 +119,7 @@ class ConversationTreeApp {
 
         nodeUpdate.transition()
             .duration(this.duration)
-            .attr('transform', d => `translate(${d.y},${d.x})`);
+            .attr('transform', d => `translate(${d.x},${d.y})`);
 
         nodeUpdate.select('circle')
             .attr('r', this.nodeRadius)
@@ -131,7 +131,7 @@ class ConversationTreeApp {
 
         const nodeExit = node.exit().transition()
             .duration(this.duration)
-            .attr('transform', d => `translate(${this.root.y},${this.root.x})`)
+            .attr('transform', d => `translate(${this.root.x},${this.root.y})`)
             .remove();
 
         nodeExit.select('circle')
@@ -331,10 +331,10 @@ class ConversationTreeApp {
     }
 
     diagonal(s, d) {
-        return `M ${s.y} ${s.x}
-                C ${(s.y + d.y) / 2} ${s.x},
-                  ${(s.y + d.y) / 2} ${d.x},
-                  ${d.y} ${d.x}`;
+        return `M ${s.x} ${s.y}
+                C ${s.x} ${(s.y + d.y) / 2},
+                  ${d.x} ${(s.y + d.y) / 2},
+                  ${d.x} ${d.y}`;
     }
 
     collapse(d) {
@@ -377,7 +377,7 @@ class ConversationTreeApp {
         this.width = container.clientWidth - this.margin.left - this.margin.right;
         this.height = container.clientHeight - this.margin.top - this.margin.bottom;
         
-        this.tree.size([this.height, this.width]);
+        this.tree.size([this.width, this.height]);
         this.render();
     }
 
@@ -423,7 +423,7 @@ class ConversationTreeApp {
             
             // Create new root hierarchy
             this.root = d3.hierarchy(this.data.roots[index], d => d.children);
-            this.root.x0 = this.height / 2;
+            this.root.x0 = this.width / 2;
             this.root.y0 = 0;
             
             // Collapse children initially
