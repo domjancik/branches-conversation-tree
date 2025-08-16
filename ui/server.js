@@ -1,20 +1,24 @@
+require('dotenv').config();
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Database path
-const DB_PATH = 'C:\\Users\\magne\\Documents\\Branches-ConversationTree\\Branches-ConversationTree-DB.db';
+const DB_PATH = process.env.DATABASE_PATH || 'C:\\Users\\magne\\Documents\\Branches-ConversationTree\\Branches-ConversationTree-DB.db';
+const IMAGES_DIR = process.env.IMAGES_DIRECTORY || 'C:\\Users\\magne\\Documents\\Branches-ConversationTree\\image_generations';
+const AUDIO_DIR = process.env.AUDIO_DIRECTORY || 'C:\\Users\\magne\\Documents\\Branches-ConversationTree\\audio_recordings';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
-app.use('/images', express.static('C:\\Users\\magne\\Documents\\Branches-ConversationTree\\image_generations'));
-app.use('/audio', express.static('C:\\Users\\magne\\Documents\\Branches-ConversationTree\\audio_recordings'));
+app.use('/images', express.static(IMAGES_DIR));
+app.use('/audio', express.static(AUDIO_DIR));
 
 // Database connection
 const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY, (err) => {
@@ -26,6 +30,24 @@ const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY, (err) => {
 });
 
 // API Routes
+
+// Get configuration for the frontend
+app.get('/api/config', (req, res) => {
+  const config = {
+    defaultRootIndex: parseInt(process.env.DEFAULT_ROOT_INDEX) || 0,
+    initialExpandLevel: parseInt(process.env.INITIAL_EXPAND_LEVEL) || 2,
+    maxNodeTextLength: parseInt(process.env.MAX_NODE_TEXT_LENGTH) || 20,
+    animationDuration: parseInt(process.env.ANIMATION_DURATION) || 750,
+    nodeRadius: parseInt(process.env.NODE_RADIUS) || 8,
+    treeMargin: {
+      top: parseInt(process.env.TREE_MARGIN_TOP) || 40,
+      right: parseInt(process.env.TREE_MARGIN_RIGHT) || 40,
+      bottom: parseInt(process.env.TREE_MARGIN_BOTTOM) || 40,
+      left: parseInt(process.env.TREE_MARGIN_LEFT) || 40
+    }
+  };
+  res.json(config);
+});
 
 // Get all audio recordings with their relationships
 app.get('/api/recordings', (req, res) => {

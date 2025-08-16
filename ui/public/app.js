@@ -1,6 +1,7 @@
 class ConversationTreeApp {
     constructor() {
         this.data = null;
+        this.config = null;
         this.selectedNode = null;
         this.svg = null;
         this.g = null;
@@ -13,12 +14,14 @@ class ConversationTreeApp {
         this.nodeRadius = 8;
         this.duration = 750;
         this.nodeCounter = 0;
+        this.layoutMode = 'vertical'; // 'vertical' or 'horizontal'
 
         this.init();
     }
 
     async init() {
         this.setupEventListeners();
+        await this.loadConfig();
         await this.loadData();
         this.populateRootSelector();
         this.initializeVisualization();
@@ -29,9 +32,34 @@ class ConversationTreeApp {
         document.getElementById('resetZoom').addEventListener('click', () => this.resetZoom());
         document.getElementById('expandAll').addEventListener('click', () => this.expandAll());
         document.getElementById('collapseAll').addEventListener('click', () => this.collapseAll());
+        document.getElementById('layoutToggle').addEventListener('click', () => this.toggleLayout());
         document.getElementById('rootSelector').addEventListener('change', (e) => this.switchRoot(e.target.value));
         
         window.addEventListener('resize', () => this.handleResize());
+    }
+
+    async loadConfig() {
+        try {
+            const response = await fetch('/api/config');
+            this.config = await response.json();
+            
+            // Update instance variables with config values
+            this.margin = this.config.treeMargin;
+            this.nodeRadius = this.config.nodeRadius;
+            this.duration = this.config.animationDuration;
+            
+            console.log('Loaded config:', this.config);
+        } catch (error) {
+            console.error('Error loading config:', error);
+            // Use defaults if config fails to load
+            this.config = {
+                defaultRootIndex: 0,
+                maxNodeTextLength: 20,
+                animationDuration: 750,
+                nodeRadius: 8,
+                treeMargin: { top: 40, right: 40, bottom: 40, left: 40 }
+            };
+        }
     }
 
     async loadData() {
@@ -64,8 +92,8 @@ class ConversationTreeApp {
         this.g = this.svg.append('g')
             .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
 
-        // Setup tree layout - for vertical orientation, width and height are swapped
-        this.tree = d3.tree().size([this.width, this.height]);
+        // Setup initial tree layout
+        this.setupTreeLayout();
 
         // Create root from first tree (assuming there's at least one root)
         if (this.data.roots && this.data.roots.length > 0) {
@@ -108,25 +136,55 @@ class ConversationTreeApp {
             .style('fill', d => d._children ? '#e74c3c' : '#fff')
             .style('cursor', 'pointer');
 
+        // Add node title text
         nodeEnter.append('text')
-            .attr('dy', '1.5em')
-            .attr('x', 0)
-            .attr('text-anchor', 'middle')
-            .text(d => this.truncateText(d.data.name, 15))
-            .style('fill-opacity', 1e-6);
+            .attr('class', 'node-title')
+            .attr('dy', this.layoutMode === 'horizontal' ? '0.35em' : '1.5em')
+            .attr('x', this.layoutMode === 'horizontal' ? 15 : 0)
+            .attr('text-anchor', this.layoutMode === 'horizontal' ? 'start' : 'middle')
+            .text(d => this.truncateText(d.data.name, this.config.maxNodeTextLength))
+            .style('fill-opacity', 1e-6)
+            .style('font-weight', 'bold');
+        
+        // Add transcription text (if available)
+        nodeEnter.append('text')
+            .attr('class', 'node-transcription')
+            .attr('dy', this.layoutMode === 'horizontal' ? '1.2em' : '2.5em')
+            .attr('x', this.layoutMode === 'horizontal' ? 15 : 0)
+            .attr('text-anchor', this.layoutMode === 'horizontal' ? 'start' : 'middle')
+            .text(d => d.data.transcriptionPreview || '')
+            .style('fill-opacity', 1e-6)
+            .style('font-size', '10px')
+            .style('fill', '#666');
 
         const nodeUpdate = nodeEnter.merge(node);
 
         nodeUpdate.transition()
             .duration(this.duration)
-            .attr('transform', d => `translate(${d.x},${d.y})`);
+            .attr('transform', d => {
+                if (this.layoutMode === 'horizontal') {
+                    return `translate(${d.y},${d.x})`;
+                } else {
+                    return `translate(${d.x},${d.y})`;
+                }
+            });
 
         nodeUpdate.select('circle')
             .attr('r', this.nodeRadius)
             .style('fill', d => d._children ? '#e74c3c' : '#fff')
             .attr('class', d => d === this.selectedNode ? 'selected' : '');
 
-        nodeUpdate.select('text')
+        // Update text positions based on layout
+        nodeUpdate.select('.node-title')
+            .attr('dy', this.layoutMode === 'horizontal' ? '0.35em' : '1.5em')
+            .attr('x', this.layoutMode === 'horizontal' ? 15 : 0)
+            .attr('text-anchor', this.layoutMode === 'horizontal' ? 'start' : 'middle')
+            .style('fill-opacity', 1);
+            
+        nodeUpdate.select('.node-transcription')
+            .attr('dy', this.layoutMode === 'horizontal' ? '1.2em' : '2.5em')
+            .attr('x', this.layoutMode === 'horizontal' ? 15 : 0)
+            .attr('text-anchor', this.layoutMode === 'horizontal' ? 'start' : 'middle')
             .style('fill-opacity', 1);
 
         const nodeExit = node.exit().transition()
@@ -330,7 +388,29 @@ class ConversationTreeApp {
             .style('opacity', 0);
     }
 
-    diagonal(s, d) {
+    diagonal(source, destination) {
+        if (this.layoutMode === 'horizontal') {
+            return this.horizontalDiagonal(source, destination);
+        } else {
+            return this.verticalDiagonal(source, destination);
+        }
+    }
+
+    horizontalDiagonal(s, d) {
+        // Calculate duration-based horizontal extension
+        const durationSpacing = this.calculateDurationBasedSpacing(s);
+        
+        // Create mostly horizontal line with minimal vertical bend at connection
+        const midY = s.y + durationSpacing;
+        
+        return `M ${s.y} ${s.x}
+                L ${midY} ${s.x}
+                L ${midY} ${d.x}
+                L ${d.y} ${d.x}`;
+    }
+
+    verticalDiagonal(s, d) {
+        // Standard curved connection for vertical layout
         return `M ${s.x} ${s.y}
                 C ${s.x} ${(s.y + d.y) / 2},
                   ${d.x} ${(s.y + d.y) / 2},
@@ -409,6 +489,49 @@ class ConversationTreeApp {
                 selector.appendChild(option);
             });
         }
+    }
+
+    toggleLayout() {
+        this.layoutMode = this.layoutMode === 'vertical' ? 'horizontal' : 'vertical';
+        
+        // Update button text
+        const button = document.getElementById('layoutToggle');
+        button.textContent = this.layoutMode === 'vertical' ? 'Horizontal Layout' : 'Vertical Layout';
+        
+        // Reconfigure tree layout
+        this.setupTreeLayout();
+        
+        // Re-render with new layout
+        this.render();
+    }
+
+    setupTreeLayout() {
+        if (this.layoutMode === 'horizontal') {
+            // For horizontal layout: root at left, branches spread vertically
+            this.tree = d3.tree().size([this.height, this.width]);
+            if (this.root) {
+                this.root.x0 = this.height / 2;
+                this.root.y0 = 0;
+            }
+        } else {
+            // For vertical layout: root at top, branches spread horizontally
+            this.tree = d3.tree().size([this.width, this.height]);
+            if (this.root) {
+                this.root.x0 = this.width / 2;
+                this.root.y0 = 0;
+            }
+        }
+    }
+
+    calculateDurationBasedSpacing(node) {
+        // Base spacing units
+        const BASE_SPACING = 50;
+        const DURATION_MULTIPLIER = 10; // pixels per second
+        
+        if (!node.data.duration) return BASE_SPACING;
+        
+        // Scale based on audio duration
+        return BASE_SPACING + (node.data.duration * DURATION_MULTIPLIER);
     }
 
     switchRoot(rootIndex) {
