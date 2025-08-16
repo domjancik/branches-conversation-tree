@@ -15,6 +15,8 @@ class ConversationTreeApp {
         this.duration = 750;
         this.nodeCounter = 0;
         this.layoutMode = 'vertical'; // 'vertical' or 'horizontal'
+        this.nodeImages = new Map(); // Cache for node images
+        this.clickTimeout = null; // Distinguish click vs dblclick
 
         this.init();
     }
@@ -127,7 +129,8 @@ class ConversationTreeApp {
         const nodeEnter = node.enter().append('g')
             .attr('class', 'node')
             .attr('transform', d => `translate(${this.root.x0},${this.root.y0})`)
-            .on('click', (event, d) => this.nodeClick(event, d))
+            .on('click', (event, d) => this.nodeSelect(event, d))
+            .on('dblclick', (event, d) => this.nodeToggle(event, d))
             .on('mouseover', (event, d) => this.showTooltip(event, d))
             .on('mouseout', () => this.hideTooltip());
 
@@ -156,6 +159,15 @@ class ConversationTreeApp {
             .style('fill-opacity', 1e-6)
             .style('font-size', '10px')
             .style('fill', '#666');
+
+        // Add placeholder for thumbnail images
+        nodeEnter.append('image')
+            .attr('class', 'node-thumbnail')
+            .attr('width', 24)
+            .attr('height', 24)
+            .attr('x', this.layoutMode === 'horizontal' ? -36 : -12)
+            .attr('y', this.layoutMode === 'horizontal' ? -12 : -36)
+            .style('opacity', 0);
 
         const nodeUpdate = nodeEnter.merge(node);
 
@@ -186,6 +198,34 @@ class ConversationTreeApp {
             .attr('x', this.layoutMode === 'horizontal' ? 15 : 0)
             .attr('text-anchor', this.layoutMode === 'horizontal' ? 'start' : 'middle')
             .style('fill-opacity', 1);
+
+        // Update thumbnail positions based on layout
+        nodeUpdate.select('.node-thumbnail')
+            .attr('x', this.layoutMode === 'horizontal' ? -36 : -12)
+            .attr('y', this.layoutMode === 'horizontal' ? -12 : -36);
+
+        // Load and display thumbnail images for visible nodes
+        nodeUpdate.each(async (d, i, nodes) => {
+            const nodeElement = d3.select(nodes[i]);
+            const imageElement = nodeElement.select('.node-thumbnail');
+            
+            // Load image data for this node
+            const imageData = await this.loadNodeImage(d.data);
+            
+            if (imageData && imageData.image_file_path) {
+                const imageUrl = `/images/${encodeURIComponent(imageData.image_file_path)}`;
+                imageElement
+                    .attr('xlink:href', imageUrl)
+                    .style('opacity', 1)
+                    .on('error', function() {
+                        // Hide image if it fails to load
+                        d3.select(this).style('opacity', 0);
+                    });
+            } else {
+                // Hide image if no image data available
+                imageElement.style('opacity', 0);
+            }
+        });
 
         const nodeExit = node.exit().transition()
             .duration(this.duration)
@@ -230,7 +270,29 @@ class ConversationTreeApp {
         });
     }
 
-    nodeClick(event, d) {
+    nodeSelect(event, d) {
+        // Delay selection slightly to allow dblclick to cancel it
+        if (this.clickTimeout) {
+            clearTimeout(this.clickTimeout);
+            this.clickTimeout = null;
+        }
+        this.clickTimeout = setTimeout(() => {
+            this.selectedNode = d;
+            this.render();
+            this.updateNodeDetails(d.data);
+            this.loadAudio(d.data);
+            this.loadImages(d.data.id);
+            this.clickTimeout = null;
+        }, 250);
+    }
+
+    nodeToggle(event, d) {
+        // Cancel pending single-click selection if any
+        if (this.clickTimeout) {
+            clearTimeout(this.clickTimeout);
+            this.clickTimeout = null;
+        }
+
         if (d.children) {
             d._children = d.children;
             d.children = null;
@@ -238,12 +300,7 @@ class ConversationTreeApp {
             d.children = d._children;
             d._children = null;
         }
-
-        this.selectedNode = d;
         this.render();
-        this.updateNodeDetails(d.data);
-        this.loadAudio(d.data);
-        this.loadImages(d.data.id);
     }
 
     async updateNodeDetails(nodeData) {
@@ -340,6 +397,31 @@ class ConversationTreeApp {
         } catch (error) {
             console.error('Error loading images:', error);
             this.displayImages([]);
+        }
+    }
+
+    async loadNodeImage(nodeData) {
+        // Check if we already have the image cached
+        if (this.nodeImages.has(nodeData.id)) {
+            return this.nodeImages.get(nodeData.id);
+        }
+
+        try {
+            const response = await fetch(`/api/recordings/${nodeData.id}/images`);
+            const images = await response.json();
+            
+            // Get the first image if available
+            const imageData = images.length > 0 ? images[0] : null;
+            
+            // Cache the result (even if null)
+            this.nodeImages.set(nodeData.id, imageData);
+            
+            return imageData;
+        } catch (error) {
+            console.error('Error loading node image:', error);
+            // Cache the null result to avoid repeated failed requests
+            this.nodeImages.set(nodeData.id, null);
+            return null;
         }
     }
 
@@ -482,7 +564,17 @@ class ConversationTreeApp {
             this.data.roots.forEach((root, index) => {
                 const option = document.createElement('option');
                 option.value = index;
-                option.textContent = `${root.name} (ID: ${root.id})`;
+                
+                // Use transcription preview if available, fallback to name
+                let displayText = root.name;
+                if (root.transcriptionPreview) {
+                    displayText = `${root.name}: ${root.transcriptionPreview}`;
+                } else if (root.transcription) {
+                    const trimmed = this.truncateText(root.transcription, 50);
+                    displayText = `${root.name}: ${trimmed}`;
+                }
+                
+                option.textContent = displayText;
                 if (index === 0) {
                     option.selected = true;
                 }
