@@ -28,6 +28,18 @@
                     <div id="node-details">
                         <h3>Select a node to view details</h3>
                     </div>
+                    <div id="audio-section">
+                        <h3>Audio Recording</h3>
+                        <div id="audio-container">
+                            <p id="audio-placeholder" style="color: #777; font-style: italic;">No audio selected</p>
+                            <audio id="audio-player" controls style="display: none; width: 100%; margin-top: 0.5rem;">
+                                <source type="audio/wav">
+                                <source type="audio/mpeg">
+                                <source type="audio/mp3">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    </div>
                     <div id="images-section">
                         <h3>Generated Images</h3>
                         <div id="images-container"></div>

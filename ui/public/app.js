@@ -184,6 +184,7 @@ class ConversationTreeApp {
         this.selectedNode = d;
         this.render();
         this.updateNodeDetails(d.data);
+        this.loadAudio(d.data);
         this.loadImages(d.data.id);
     }
 
@@ -230,6 +231,47 @@ class ConversationTreeApp {
                 </div>
             ` : ''}
         `;
+    }
+
+    loadAudio(nodeData) {
+        const audioPlayer = document.getElementById('audio-player');
+        const audioPlaceholder = document.getElementById('audio-placeholder');
+        
+        if (nodeData.fullPath) {
+            // Show audio player and hide placeholder
+            audioPlayer.style.display = 'block';
+            audioPlaceholder.style.display = 'none';
+            
+            // Set audio source
+            const audioUrl = `/audio/${encodeURIComponent(nodeData.fullPath)}`;
+            const sources = audioPlayer.getElementsByTagName('source');
+            
+            // Update all source elements
+            for (let source of sources) {
+                source.src = audioUrl;
+            }
+            
+            // Load the audio
+            audioPlayer.load();
+            
+            // Add error handling
+            audioPlayer.onerror = () => {
+                console.error('Error loading audio:', nodeData.fullPath);
+                audioPlayer.style.display = 'none';
+                audioPlaceholder.style.display = 'block';
+                audioPlaceholder.textContent = 'Audio file not found or unsupported format';
+            };
+            
+            // Add loaded event to show success
+            audioPlayer.onloadeddata = () => {
+                console.log('Audio loaded successfully:', nodeData.fullPath);
+            };
+        } else {
+            // Hide audio player and show placeholder
+            audioPlayer.style.display = 'none';
+            audioPlaceholder.style.display = 'block';
+            audioPlaceholder.textContent = 'No audio file available';
+        }
     }
 
     async loadImages(recordingId) {
@@ -393,6 +435,13 @@ class ConversationTreeApp {
             this.selectedNode = null;
             document.getElementById('node-details').innerHTML = '<h3>Select a node to view details</h3>';
             document.getElementById('images-container').innerHTML = '';
+            
+            // Reset audio player
+            const audioPlayer = document.getElementById('audio-player');
+            const audioPlaceholder = document.getElementById('audio-placeholder');
+            audioPlayer.style.display = 'none';
+            audioPlaceholder.style.display = 'block';
+            audioPlaceholder.textContent = 'No audio selected';
             
             // Re-render the tree
             this.render();
