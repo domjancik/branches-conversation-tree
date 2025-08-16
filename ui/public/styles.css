@@ -1,0 +1,290 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
+
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header styles */
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.controls button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.controls button:hover {
+    background: #2980b9;
+}
+
+#rootSelector {
+    background: #34495e;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+#rootSelector:focus {
+    outline: 2px solid #3498db;
+}
+
+/* Main content layout */
+main {
+    flex: 1;
+    overflow: hidden;
+}
+
+#container {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    height: 100%;
+    gap: 0;
+}
+
+/* Tree visualization styles */
+#tree-visualization {
+    background: white;
+    position: relative;
+    overflow: hidden;
+    border-right: 1px solid #ddd;
+}
+
+/* Details panel styles */
+#details-panel {
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#node-details {
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+}
+
+#node-details h3 {
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.detail-item {
+    margin-bottom: 0.5rem;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #555;
+    display: inline-block;
+    min-width: 80px;
+}
+
+.detail-value {
+    color: #333;
+}
+
+.transcription-text {
+    background: #fff;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-top: 0.5rem;
+}
+
+/* Images section styles */
+#images-section {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+#images-section h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.5rem;
+}
+
+#images-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.image-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.image-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.image-prompt {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.4;
+}
+
+.image-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+/* D3 Tree Styles */
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: #3498db;
+    stroke-width: 3px;
+    transition: all 0.3s;
+}
+
+.node.selected circle {
+    fill: #3498db;
+    stroke: #2980b9;
+    stroke-width: 4px;
+}
+
+.node:hover circle {
+    fill: #ecf0f1;
+    stroke: #2980b9;
+    stroke-width: 4px;
+}
+
+.node text {
+    font: 12px sans-serif;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.node.has-children circle {
+    stroke: #e74c3c;
+}
+
+.node.has-children.selected circle {
+    fill: #e74c3c;
+    stroke: #c0392b;
+}
+
+.link {
+    fill: none;
+    stroke: #bdc3c7;
+    stroke-width: 2px;
+    transition: stroke 0.3s;
+}
+
+.link.highlight {
+    stroke: #3498db;
+    stroke-width: 3px;
+}
+
+/* Tooltip styles */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+/* Loading styles */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 1.2rem;
+    color: #7f8c8d;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    #container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 400px;
+    }
+    
+    #details-panel {
+        border-right: none;
+        border-top: 1px solid #ddd;
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .controls {
+        justify-content: center;
+    }
+    
+    #container {
+        grid-template-rows: 1fr 300px;
+    }
+}
