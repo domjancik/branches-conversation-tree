@@ -312,3 +312,12 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 #endregion
+
+#region Node / JS
+# Node modules for JS/TS projects
+node_modules/
+
+# Local dump and Warp helper files
+*.dmp
+.warp*
+#endregion
