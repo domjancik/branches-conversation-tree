@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Branches Graph View</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="graph.css" />
+</head>
+<body>
+  <div id="graph-app">
+    <header class="graph-header">
+      <div class="left">
+        <span class="pill">Graph</span>
+        <button id="fit" title="Fit to screen">Fit</button>
+        <button id="toggleTheme" title="Toggle theme">Theme</button>
+      </div>
+      <div class="right">
+        <a href="/" class="link">Tree View</a>
+      </div>
+    </header>
+
+    <main id="graph-container">
+      <div id="graph"></div>
+    </main>
+  </div>
+
+  <script src="graph.js"></script>
+</body>
+</html>
+

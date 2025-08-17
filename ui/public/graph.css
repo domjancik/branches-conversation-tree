@@ -1,0 +1,97 @@
+/* Full-screen dark themed graph view */
+:root {
+  --bg: #0f1216;
+  --panel: #151a21;
+  --text: #d7dde7;
+  --muted: #8b93a2;
+  --rail: #2a3341;
+  --link: #5a6b85;
+  --accent: #7c5cff;
+}
+
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid #1e2430;
+}
+.graph-header .pill {
+  background: #2a3344;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-right: 8px;
+  font-size: 12px;
+}
+.graph-header button, .graph-header .link {
+  background: #243042;
+  color: var(--text);
+  border: 1px solid #2d3b50;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.graph-header button:hover, .graph-header .link:hover {
+  background: #2b3a50;
+}
+
+#graph-container {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+#graph {
+  width: 100%;
+  height: 100%;
+}
+
+/* Lanes and nodes */
+.branch-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+.link-path {
+  fill: none;
+  stroke: var(--link);
+  stroke-width: 2;
+}
+.node-dot {
+  stroke: #222a36;
+  stroke-width: 2;
+}
+.node-row {
+  cursor: pointer;
+}
+.wip-text {
+  fill: var(--text);
+  font-size: 12px;
+}
+.thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #2a3344;
+  box-shadow: 0 0 0 2px #0f1216;
+}
+.thumb-group image {
+  clip-path: circle(14px at center);
+}
+
