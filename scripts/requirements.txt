@@ -1,0 +1,42 @@
+# Requirements for YouTube to Audio Recording Script
+
+# YouTube video download and processing
+yt-dlp>=2024.7.16
+
+# HTTP requests for API communication  
+requests>=2.31.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Path manipulation (included in Python 3.4+)
+pathlib
+
+# Command line argument parsing (built-in)
+argparse
+
+# JSON handling (built-in)
+json5>=0.9.14
+
+# Logging (built-in)
+logging
+
+# Subprocess (built-in)
+subprocess
+
+# Note: ffmpeg is a system dependency and must be installed separately:
+# 
+# Windows (using Chocolatey):
+#   choco install ffmpeg
+#
+# Windows (using Winget):  
+#   winget install Gyan.FFmpeg
+#
+# macOS (using Homebrew):
+#   brew install ffmpeg
+#
+# Ubuntu/Debian:
+#   sudo apt update && sudo apt install ffmpeg
+#
+# Arch Linux:
+#   sudo pacman -S ffmpeg
