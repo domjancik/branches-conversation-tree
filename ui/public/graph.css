@@ -1,7 +1,11 @@
 /* Full-screen dark themed graph view */
 :root {
   --bg: #0f1216;
+  --bg-soft: radial-gradient(1200px 600px at 20% 0%, #141925 0%, #0f1216 40%),
+              radial-gradient(800px 400px at 100% 100%, rgba(124, 92, 255, 0.12), transparent 60%),
+              linear-gradient(180deg, #0f1216 0%, #0b0e12 100%);
   --panel: #151a21;
+  --panel-soft: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
   --text: #d7dde7;
   --muted: #8b93a2;
   --rail: #2a3341;
@@ -15,6 +19,7 @@ html, body {
 body {
   margin: 0;
   background: var(--bg);
+  background-image: var(--bg-soft);
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
@@ -25,7 +30,10 @@ body {
   align-items: center;
   padding: 10px 16px;
   background: var(--panel);
+  background-image: var(--panel-soft);
   border-bottom: 1px solid #1e2430;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
 }
 .graph-header .pill {
   background: #2a3344;
@@ -36,16 +44,19 @@ body {
   font-size: 12px;
 }
 .graph-header button, .graph-header .link {
-  background: #243042;
+  background: linear-gradient(180deg, #2a3344, #243042);
   color: var(--text);
   border: 1px solid #2d3b50;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
 }
 .graph-header button:hover, .graph-header .link:hover {
-  background: #2b3a50;
+  background: linear-gradient(180deg, #2f3b50, #2b3a50);
+  transform: translateY(-1px);
 }
 
 #graph-container {
@@ -94,4 +105,3 @@ body {
 .thumb-group image {
   clip-path: circle(14px at center);
 }
-
