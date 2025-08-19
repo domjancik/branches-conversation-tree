@@ -1,0 +1,15 @@
+[project]
+name = "categorize-and-relate"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.111.0",
+    "faster-whisper==1.0.3",
+    "ollama>=0.5.3",
+    "pydub==0.25.1",
+    "python-multipart==0.0.9",
+    "requests>=2.32.5",
+    "uvicorn[standard]==0.30.0",
+]

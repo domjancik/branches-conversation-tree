@@ -1,0 +1,506 @@
+/* === Root Variables === */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --accent-warm: #e67e22;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --background: #ffffff;
+    --border-light: #ecf0f1;
+    --code-bg: #f8f9fa;
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    
+    /* Typography */
+    --font-primary: 'Georgia', 'Times New Roman', serif;
+    --font-secondary: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    
+    /* Spacing */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-xxl: 3rem;
+}
+
+/* === Print Media Setup === */
+@page {
+    size: A4;
+    margin: 2.5cm 2cm 2cm 2cm;
+    
+    @top-center {
+        content: "Branches Conversation Tree - Project Specification";
+        font-family: var(--font-secondary);
+        font-size: 10px;
+        color: var(--text-secondary);
+        padding-bottom: 0.5cm;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    @bottom-center {
+        content: counter(page);
+        font-family: var(--font-secondary);
+        font-size: 10px;
+        color: var(--text-secondary);
+    }
+}
+
+@page:first {
+    @top-center { content: none; }
+    @bottom-center { content: none; }
+    margin: 0;
+}
+
+@page:blank {
+    @top-center { content: none; }
+    @bottom-center { content: none; }
+}
+
+/* === Base Typography === */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-primary);
+    font-size: 11pt;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--background);
+    margin: 0;
+    padding: 0;
+}
+
+/* === Cover Page === */
+.cover-page {
+    page: cover;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-primary);
+    color: white;
+    page-break-after: always;
+}
+
+.cover-content {
+    text-align: center;
+    max-width: 80%;
+}
+
+.cover-title {
+    font-size: 3.5rem;
+    font-weight: 300;
+    margin: 0 0 var(--space-md) 0;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+
+.cover-subtitle {
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin: 0 0 var(--space-lg) 0;
+    opacity: 0.9;
+}
+
+.cover-tagline {
+    font-size: 1.2rem;
+    font-weight: 300;
+    margin-bottom: var(--space-xxl);
+    opacity: 0.8;
+    font-family: var(--font-secondary);
+}
+
+/* Tree Visualization on Cover */
+.tree-visual {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    margin: var(--space-xxl) auto;
+}
+
+.branch-line {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 2px;
+    height: 60px;
+    background: rgba(255,255,255,0.6);
+    transform: translateX(-50%);
+}
+
+.branch-line::before,
+.branch-line::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 80px;
+    height: 2px;
+    background: rgba(255,255,255,0.6);
+}
+
+.branch-line::before {
+    left: -40px;
+    transform: rotate(30deg);
+    transform-origin: right center;
+}
+
+.branch-line::after {
+    right: -40px;
+    transform: rotate(-30deg);
+    transform-origin: left center;
+}
+
+.node {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid rgba(255,255,255,0.8);
+}
+
+.root-node {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-warm);
+}
+
+.child-node-1 {
+    top: 80px;
+    left: 20px;
+}
+
+.child-node-2 {
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.child-node-3 {
+    top: 80px;
+    right: 20px;
+}
+
+.cover-meta {
+    margin-top: var(--space-xxl);
+    font-family: var(--font-secondary);
+}
+
+.cover-meta div {
+    margin: var(--space-sm) 0;
+    opacity: 0.8;
+}
+
+.version {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.framework {
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* === Table of Contents === */
+.toc-page {
+    page-break-before: always;
+    page-break-after: always;
+}
+
+.toc-title {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin-bottom: var(--space-xl);
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--accent-color);
+    padding-bottom: var(--space-md);
+}
+
+.table-of-contents {
+    font-family: var(--font-secondary);
+}
+
+.toc-entry {
+    display: flex;
+    justify-content: space-between;
+    margin: var(--space-md) 0;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px dotted var(--border-light);
+}
+
+.toc-entry.level-1 {
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-top: var(--space-lg);
+}
+
+.toc-entry.level-2 {
+    margin-left: var(--space-lg);
+    font-weight: 500;
+}
+
+.toc-entry.level-3 {
+    margin-left: var(--space-xl);
+    font-size: 0.9em;
+}
+
+.toc-title-text {
+    flex-grow: 1;
+}
+
+.toc-page-number {
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+/* === Main Content Typography === */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    page-break-after: avoid;
+}
+
+h1 {
+    font-size: 2.2rem;
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--accent-color);
+    padding-bottom: var(--space-sm);
+    page-break-before: always;
+}
+
+h1:first-of-type {
+    page-break-before: auto;
+}
+
+h2 {
+    font-size: 1.6rem;
+    color: var(--secondary-color);
+    margin-top: 2rem;
+}
+
+h3 {
+    font-size: 1.3rem;
+    color: var(--accent-color);
+}
+
+h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+h5 {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* === Paragraphs and Text === */
+p {
+    margin: var(--space-md) 0;
+    text-align: justify;
+    hyphens: auto;
+}
+
+/* === Lists === */
+ul, ol {
+    margin: var(--space-md) 0;
+    padding-left: var(--space-xl);
+}
+
+li {
+    margin: var(--space-sm) 0;
+    line-height: 1.6;
+}
+
+li > ul, li > ol {
+    margin-top: var(--space-sm);
+}
+
+/* === Code Blocks === */
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: var(--space-md);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 9pt;
+    line-height: 1.4;
+    page-break-inside: avoid;
+    margin: var(--space-lg) 0;
+}
+
+code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--code-bg);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+}
+
+/* === Blockquotes === */
+blockquote {
+    border-left: 4px solid var(--accent-color);
+    margin: var(--space-lg) 0;
+    padding-left: var(--space-lg);
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* === Tables === */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--space-lg) 0;
+    font-size: 10pt;
+    page-break-inside: auto;
+}
+
+th, td {
+    border: 1px solid var(--border-light);
+    padding: var(--space-sm);
+    text-align: left;
+    page-break-inside: avoid;
+}
+
+th {
+    background: var(--code-bg);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+tr:nth-child(even) {
+    background: rgba(52, 152, 219, 0.05);
+}
+
+/* === Diagrams and Visual Elements === */
+.mermaid {
+    text-align: center;
+    margin: var(--space-xl) 0;
+    page-break-inside: avoid;
+}
+
+/* === Page Breaks === */
+.page-break {
+    page-break-before: always;
+}
+
+.avoid-break {
+    page-break-inside: avoid;
+}
+
+.keep-with-next {
+    page-break-after: avoid;
+}
+
+/* === Section Dividers === */
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--accent-color), transparent);
+    margin: var(--space-xxl) 0;
+}
+
+/* === Special Content Boxes === */
+.info-box {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 6px;
+    padding: var(--space-md);
+    margin: var(--space-lg) 0;
+    page-break-inside: avoid;
+}
+
+.warning-box {
+    background: rgba(230, 126, 34, 0.1);
+    border: 1px solid rgba(230, 126, 34, 0.3);
+    border-radius: 6px;
+    padding: var(--space-md);
+    margin: var(--space-lg) 0;
+    page-break-inside: avoid;
+}
+
+/* === Interface Definitions === */
+.interface-definition {
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    margin: var(--space-lg) 0;
+    overflow: hidden;
+    page-break-inside: avoid;
+}
+
+.interface-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-mono);
+    font-weight: 600;
+}
+
+.interface-body {
+    padding: var(--space-md);
+}
+
+/* === Screen vs Print === */
+@media screen {
+    body {
+        background: #f5f6fa;
+        padding: var(--space-md);
+    }
+    
+    .cover-page,
+    .toc-page,
+    #content {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: var(--space-lg);
+    }
+    
+    #content {
+        padding: var(--space-xxl);
+        max-width: 210mm;
+        margin: 0 auto var(--space-lg);
+    }
+}
+
+@media print {
+    body {
+        background: white;
+    }
+    
+    .cover-page {
+        margin: 0;
+    }
+}
+
+/* === Responsive Adjustments === */
+@media screen and (max-width: 768px) {
+    .cover-title {
+        font-size: 2.5rem;
+    }
+    
+    .cover-subtitle {
+        font-size: 1.4rem;
+    }
+    
+    #content {
+        padding: var(--space-lg);
+    }
+    
+    pre {
+        font-size: 8pt;
+    }
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Branches Conversation Tree v2</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Branches Conversation Tree v2</h1>
+      <div class="controls">
+        <button id="resetZoom">Reset Zoom</button>
+        <button id="expandAll">Expand All</button>
+        <button id="collapseAll">Collapse All</button>
+        <button id="layoutToggle">Horizontal Layout</button>
+        <select id="rootSelector">
+          <option value="">Select Root...</option>
+        </select>
+        <a href="./graph.html" class="link">Graph View</a>
+      </div>
+    </header>
+
+    <main>
+      <div id="container">
+        <div id="tree-visualization"></div>
+        <div id="details-panel">
+          <div id="node-details"><h3>Select a node to view details</h3></div>
+          <div id="audio-section">
+            <h3>Audio Recording</h3>
+            <div id="audio-container">
+              <p id="audio-placeholder" class="muted">No audio selected</p>
+              <audio id="audio-player" controls style="display:none;width:100%">
+                <source type="audio/wav" />
+                <source type="audio/mpeg" />
+                <source type="audio/mp3" />
+              </audio>
+            </div>
+          </div>
+        </div>
+        <div id="images-panel">
+          <div id="images-section">
+            <h3>Generated Images</h3>
+            <div id="images-container"></div>
+          </div>
+        </div>
+      </div>
+  </main>
+  </div>
+
+  <div class="fab-bar" aria-label="Quick view switch">
+    <a class="fab active" href="./index.html" title="Tree view">🌳</a>
+    <a class="fab" href="./graph.html" title="Graph view">🔀</a>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

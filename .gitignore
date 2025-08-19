@@ -1,3 +1,45 @@
+# Node / JS
+node_modules/
+**/node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+web/dist/
+web/build/
+web/.cache/
+*.map
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+ENV/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# FastAPI/UVicorn
+*.sqlite3
+
+# Audio temp
+*.wav
+*.webm
+*.mp3
+*.m4a
+
 .env
 
 #region C#

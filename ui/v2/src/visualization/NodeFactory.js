@@ -3,8 +3,8 @@ export class NodeFactory {
   enter(selection){
     const cfg = this.state.get('config');
     const radius = cfg.nodeRadius || 8;
-    const blockWidth = cfg.nodeBlockWidth || 180;
-    const blockMaxHeight = cfg.nodeBlockMaxHeight || 120;
+    const blockWidth = cfg.nodeBlockWidth || 240; // wider to accommodate text
+    const blockMaxHeight = cfg.nodeBlockMaxHeight || 140;
 
     // Base node dot
     selection.append('circle')
@@ -23,6 +23,13 @@ export class NodeFactory {
 
     fo.append('xhtml:div')
       .attr('class','node-label')
-      .text(d => d.data.name || '');
+      .html(d => {
+        const name = d.data.name || '';
+        const desc = (d.data.transcriptionPreview || d.data.transcription || '').trim();
+        return `
+          <div class="title">${name}</div>
+          ${desc ? `<div class="desc">${desc}</div>` : ''}
+        `;
+      });
   }
 }

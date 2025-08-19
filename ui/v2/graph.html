@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Branches Graph View v2</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="graph-app">
+    <header class="graph-header">
+      <div class="left">
+        <span class="pill">Graph v2</span>
+        <button id="fit" title="Fit to screen">Fit</button>
+        <button id="toggleTheme" title="Toggle theme">Theme</button>
+      </div>
+      <div class="right" style="display:flex;gap:8px;align-items:center;">
+        <label style="display:flex;gap:6px;align-items:center;color:#d7dde7;">
+          <input type="checkbox" id="unfiltered" checked /> Show all roots
+        </label>
+        <select id="rootSelector" title="Filter by root" disabled style="background:#243042;color:#d7dde7;border:1px solid #2d3b50;border-radius:6px;padding:6px 8px;">
+          <option value="" selected>Select root…</option>
+        </select>
+        <a href="./index.html" class="link">Tree View</a>
+      </div>
+    </header>
+    <main id="graph-container">
+      <div id="graph"></div>
+    </main>
+  </div>
+  <div class="fab-bar" aria-label="Quick view switch">
+    <a class="fab" href="./index.html" title="Tree view">🌳</a>
+    <a class="fab active" href="./graph.html" title="Graph view">🔀</a>
+  </div>
+  <script type="module" src="./src/graphMain.js"></script>
+</body>
+</html>

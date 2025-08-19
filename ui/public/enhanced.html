@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Branches Conversation Tree</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Enhanced header styling */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(90deg, rgba(15, 15, 35, 0.95), rgba(26, 26, 46, 0.9));
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(45deg, #7c5cff, #ff6b9d, #c471ed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* Enhanced controls styling */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .enhanced-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-left: 20px;
+            padding-left: 20px;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, rgba(124, 92, 255, 0.8), rgba(196, 113, 237, 0.8));
+            border: 1px solid rgba(124, 92, 255, 0.5);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(124, 92, 255, 1), rgba(196, 113, 237, 1));
+            box-shadow: 0 5px 15px rgba(124, 92, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(124, 92, 255, 0.3);
+        }
+
+        .root-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            font-size: 0.85rem;
+            outline: none;
+            min-width: 200px;
+        }
+
+        .root-selector option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            margin-top: 80px; /* Account for header height */
+        }
+
+        .visualization-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(124, 92, 255, 0.1) 0%, transparent 70%);
+        }
+
+        #tree-visualization {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #tree-visualization:active {
+            cursor: grabbing;
+        }
+
+        /* Enhanced sidebar styling */
+        .sidebar {
+            width: 350px;
+            background: linear-gradient(180deg, rgba(15, 15, 35, 0.9), rgba(26, 26, 46, 0.8));
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(124, 92, 255, 0.3);
+        }
+
+        .panel h3 {
+            color: #7c5cff;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Enhanced node details */
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #c471ed;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            color: #fff;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .transcription-text {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-style: italic;
+            line-height: 1.5;
+            border-left: 3px solid #7c5cff;
+        }
+
+        /* Enhanced audio player */
+        #audio-player {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #audio-placeholder {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            color: #666;
+            font-style: italic;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        /* Enhanced images container */
+        .image-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .image-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .image-prompt {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .image-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 8px;
+        }
+
+        /* Enhanced SVG styling */
+        .link {
+            fill: none;
+            stroke: rgba(124, 92, 255, 0.6);
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .link:hover {
+            stroke: rgba(255, 107, 157, 0.8);
+            stroke-width: 3px;
+        }
+
+        .node circle {
+            fill: rgba(255, 255, 255, 0.9);
+            stroke: #7c5cff;
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover circle {
+            fill: rgba(255, 107, 157, 0.9);
+            stroke: #ff6b9d;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 10px rgba(255, 107, 157, 0.5));
+        }
+
+        .node.selected circle {
+            fill: rgba(255, 107, 157, 1);
+            stroke: #fff;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 15px rgba(255, 107, 157, 0.8));
+        }
+
+        .node text {
+            fill: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .node-title {
+            font-weight: 600;
+        }
+
+        .node-transcription {
+            fill: #ccc;
+            font-size: 10px;
+        }
+
+        /* Enhanced waveform styling */
+        .waveform-path {
+            stroke: #7c5cff;
+            stroke-width: 2px;
+            fill: none;
+            opacity: 0.7;
+            filter: drop-shadow(0 0 5px rgba(124, 92, 255, 0.5));
+            animation: waveformPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes waveformPulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 0.9; }
+        }
+
+        /* Particle effects */
+        .particle {
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        /* Enhanced tooltip */
+        .tooltip {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(15, 15, 35, 0.95), rgba(26, 26, 46, 0.9));
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            border: 1px solid rgba(124, 92, 255, 0.3);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+        }
+
+        .tooltip strong {
+            color: #7c5cff;
+        }
+
+        .tooltip em {
+            color: #ff6b9d;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: #7c5cff;
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Scrollbar styling */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(124, 92, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(124, 92, 255, 0.8);
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 300px;
+            }
+            
+            .enhanced-controls {
+                margin-left: 10px;
+                padding-left: 10px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+                border-left: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .enhanced-controls {
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+                margin-top: 10px;
+            }
+        }
+
+        /* Animation for enhanced features */
+        .enhanced-feature {
+            animation: featureIntro 0.5s ease-out;
+        }
+
+        @keyframes featureIntro {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Enhanced Branches Conversation Tree</h1>
+            <div class="controls">
+                <select id="rootSelector" class="root-selector">
+                    <option value="">Select conversation root...</option>
+                </select>
+                
+                <button id="resetZoom" class="btn">Reset Zoom</button>
+                <button id="expandAll" class="btn">Expand All</button>
+                <button id="collapseAll" class="btn">Collapse All</button>
+                <button id="layoutToggle" class="btn">Horizontal Layout</button>
+                
+                <div class="enhanced-controls">
+                    <!-- Enhanced controls will be added here by JavaScript -->
+                </div>
+
+                <!-- Camera controls -->
+                <div class="enhanced-controls" aria-label="Camera controls">
+                    <button id="zoomIn" class="btn" title="Zoom In">+</button>
+                    <button id="zoomOut" class="btn" title="Zoom Out">−</button>
+                    <button id="panLeft" class="btn" title="Pan Left">⟵</button>
+                    <button id="panRight" class="btn" title="Pan Right">⟶</button>
+                    <button id="panUp" class="btn" title="Pan Up">⟰</button>
+                    <button id="panDown" class="btn" title="Pan Down">⟱</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="visualization-container">
+                <div id="tree-visualization"></div>
+            </div>
+
+            <aside class="sidebar">
+                <div class="panel">
+                    <h3>Node Details</h3>
+                    <div id="node-details">
+                        <h3>Select a node to view details</h3>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Audio</h3>
+                    <audio id="audio-player" controls style="display: none;">
+                        <source src="" type="audio/mpeg">
+                        <source src="" type="audio/wav">
+                        <source src="" type="audio/ogg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div id="audio-placeholder">No audio selected</div>
+                </div>
+
+                <div class="panel">
+                    <h3>Images</h3>
+                    <div id="images-container"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        // Set the correct API base URL for development
+        window.API_BASE_URL = 'http://localhost:3003';
+    </script>
+    <script src="enhanced-app.js"></script>
+</body>
+</html>

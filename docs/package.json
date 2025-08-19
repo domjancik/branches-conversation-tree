@@ -1,0 +1,31 @@
+{
+  "name": "branches-conversation-tree-docs",
+  "version": "1.0.0",
+  "description": "Beautiful documentation rendering for Branches Conversation Tree project specification",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=3001 --open=/index.html",
+    "build": "node build.js",
+    "serve": "live-server --port=3001",
+    "pdf": "node generate-pdf.js"
+  },
+  "keywords": [
+    "documentation",
+    "paged.js",
+    "print",
+    "pdf",
+    "markdown"
+  ],
+  "author": "Branches Conversation Tree Team",
+  "license": "MIT",
+  "dependencies": {
+    "pagedjs": "^0.4.3",
+    "marked": "^12.0.0",
+    "prismjs": "^1.29.0",
+    "dompurify": "^3.0.8"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "puppeteer": "^22.1.0"
+  }
+}
