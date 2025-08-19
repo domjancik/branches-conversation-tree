@@ -36,17 +36,6 @@ class EnhancedConversationTreeApp {
         // Animation and timing
         this.animationFrameId = null;
         this.particleSystem = null;
-
-        // Link image placement parameters (editable via UI)
-        this.linkImageParams = {
-            startOffset: 0.3, // fraction from parent toward child (0-1)
-            endOffset: 0.7,   // fraction from parent toward child (0-1)
-            imageSize: 28,    // px
-            borderRadius: 6,  // px (uses CSS clip-path rounding)
-            spacing: 0,       // reserved for future advanced spacing
-            maxPerLink: 8     // cap
-        };
-        this.presetsKey = 'linkImageParamsPresets';
         
         this.init();
     }
@@ -60,7 +49,6 @@ class EnhancedConversationTreeApp {
         this.initializeVisualization();
         this.render();
         this.setupEnhancedControls();
-        this.setupParamsPanel();
     }
 
     setupAudioContext() {
@@ -728,142 +716,6 @@ linkUpdate.transition()
         this.render();
     }
 
-    // Floating parameters panel for link images
-    setupParamsPanel() {
-        // Create toggle button if not present (in case HTML couldn't be edited)
-        let toggleBtn = document.getElementById('paramsToggle');
-        if (!toggleBtn) {
-            toggleBtn = document.createElement('button');
-            toggleBtn.id = 'paramsToggle';
-            toggleBtn.className = 'btn';
-            toggleBtn.textContent = '⚙️ Params';
-            Object.assign(toggleBtn.style, {
-                position: 'fixed', right: '16px', bottom: '16px', zIndex: 2000,
-                boxShadow: '0 6px 18px rgba(0,0,0,0.4)'
-            });
-            document.body.appendChild(toggleBtn);
-        }
-
-        let panel = document.getElementById('paramsPanel');
-        if (!panel) {
-            panel = document.createElement('div');
-            panel.id = 'paramsPanel';
-            Object.assign(panel.style, {
-                position: 'fixed', right: '16px', bottom: '70px', width: '320px', maxHeight: '70vh',
-                overflow: 'auto', zIndex: 2000, display: 'none',
-                background: 'rgba(15,15,35,0.95)', border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '12px', padding: '14px', backdropFilter: 'blur(10px)'
-            });
-            panel.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <strong style="color:#7c5cff;">Link Image Parameters</strong>
-                    <button id="paramsClose" class="btn" style="padding:4px 10px;">✖</button>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;">
-                    <label>Start offset (0-1)</label>
-                    <input id="paramStartOffset" type="number" step="0.05" min="0" max="1" style="width:90px;">
-                    <label>End offset (0-1)</label>
-                    <input id="paramEndOffset" type="number" step="0.05" min="0" max="1" style="width:90px;">
-                    <label>Image size (px)</label>
-                    <input id="paramImageSize" type="number" min="8" max="128" step="2" style="width:90px;">
-                    <label>Border radius (px)</label>
-                    <input id="paramBorderRadius" type="number" min="0" max="32" step="1" style="width:90px;">
-                    <label>Max per link</label>
-                    <input id="paramMaxPerLink" type="number" min="1" max="20" step="1" style="width:90px;">
-                </div>
-                <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:10px 0;"/>
-                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                    <input id="presetName" type="text" placeholder="Preset name" style="flex:1; min-width:120px; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.08); color:#fff;">
-                    <button id="savePreset" class="btn">Save</button>
-                    <select id="presetSelect" class="root-selector" style="min-width:140px;"></select>
-                    <button id="loadPreset" class="btn">Load</button>
-                    <button id="deletePreset" class="btn" style="background:linear-gradient(135deg, rgba(255,99,99,0.8), rgba(196, 113, 113, 0.8)); border-color: rgba(255,99,99,0.5);">Delete</button>
-                </div>
-            `;
-            document.body.appendChild(panel);
-        }
-
-        const applyInputs = () => {
-            document.getElementById('paramStartOffset').value = this.linkImageParams.startOffset;
-            document.getElementById('paramEndOffset').value = this.linkImageParams.endOffset;
-            document.getElementById('paramImageSize').value = this.linkImageParams.imageSize;
-            document.getElementById('paramBorderRadius').value = this.linkImageParams.borderRadius;
-            document.getElementById('paramMaxPerLink').value = this.linkImageParams.maxPerLink;
-        };
-        applyInputs();
-
-        const show = () => panel.style.display = 'block';
-        const hide = () => panel.style.display = 'none';
-        toggleBtn.onclick = () => panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        document.getElementById('paramsClose').onclick = hide;
-
-        const onInputChange = () => {
-            const start = parseFloat(document.getElementById('paramStartOffset').value);
-            const end = parseFloat(document.getElementById('paramEndOffset').value);
-            const size = parseInt(document.getElementById('paramImageSize').value, 10);
-            const radius = parseInt(document.getElementById('paramBorderRadius').value, 10);
-            const maxPerLink = parseInt(document.getElementById('paramMaxPerLink').value, 10);
-            // Ensure valid bounds
-            this.linkImageParams.startOffset = Math.max(0, Math.min(1, start));
-            this.linkImageParams.endOffset = Math.max(0, Math.min(1, end));
-            if (this.linkImageParams.endOffset < this.linkImageParams.startOffset) {
-                this.linkImageParams.endOffset = this.linkImageParams.startOffset;
-            }
-            this.linkImageParams.imageSize = Math.max(8, Math.min(128, size));
-            this.linkImageParams.borderRadius = Math.max(0, Math.min(32, radius));
-            this.linkImageParams.maxPerLink = Math.max(1, Math.min(20, maxPerLink));
-            this.render();
-        };
-
-        ['paramStartOffset', 'paramEndOffset', 'paramImageSize', 'paramBorderRadius', 'paramMaxPerLink']
-            .forEach(id => document.getElementById(id).addEventListener('input', onInputChange));
-
-        // Presets
-        const loadPresets = () => {
-            try {
-                return JSON.parse(localStorage.getItem(this.presetsKey) || '{}');
-            } catch { return {}; }
-        };
-        const savePresets = (obj) => localStorage.setItem(this.presetsKey, JSON.stringify(obj));
-        const refreshPresetSelect = () => {
-            const sel = document.getElementById('presetSelect');
-            sel.innerHTML = '';
-            const presets = loadPresets();
-            Object.keys(presets).forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name; opt.textContent = name; sel.appendChild(opt);
-            });
-        };
-        refreshPresetSelect();
-
-        document.getElementById('savePreset').onclick = () => {
-            const name = document.getElementById('presetName').value.trim();
-            if (!name) return;
-            const presets = loadPresets();
-            presets[name] = {...this.linkImageParams};
-            savePresets(presets);
-            refreshPresetSelect();
-        };
-        document.getElementById('loadPreset').onclick = () => {
-            const name = document.getElementById('presetSelect').value;
-            const presets = loadPresets();
-            if (name && presets[name]) {
-                this.linkImageParams = {...presets[name]};
-                applyInputs();
-                this.render();
-            }
-        };
-        document.getElementById('deletePreset').onclick = () => {
-            const name = document.getElementById('presetSelect').value;
-            const presets = loadPresets();
-            if (name && presets[name]) {
-                delete presets[name];
-                savePresets(presets);
-                refreshPresetSelect();
-            }
-        };
-    }
-
     updateControlButton(buttonId, label, state) {
         const button = document.getElementById(buttonId);
         if (button) {
@@ -1115,36 +967,13 @@ displayImages(images) {
 
         // Flatten data: one entry per image with its link reference and index
         const flattened = [];
-        links.forEach((l) =e {
+        links.forEach((l) => {
             const nodeId = l.data?.id;
-            const imgsAll = this.nodeImagesList.get(nodeId) || [];
-            const imgs = imgsAll.slice(0, this.linkImageParams.maxPerLink);
-            imgs.forEach((img, idx) =e {
+            const imgs = this.nodeImagesList.get(nodeId) || [];
+            imgs.forEach((img, idx) => {
                 flattened.push({ link: l, image: img, idx, count: imgs.length });
             });
         });
-        // Also include virtual root link so first node can display images
-        if (this.root) {
-            const rootId = this.root.data?.id;
-            if (!this.nodeImagesList.has(rootId)) {
-                try {
-                    const apiUrl = window.API_BASE_URL ? `${window.API_BASE_URL}/api/recordings/${rootId}/images` : `/api/recordings/${rootId}/images`;
-                    const resp = await fetch(apiUrl);
-                    const imgs = await resp.json();
-                    this.nodeImagesList.set(rootId, imgs || []);
-                } catch (e) {
-                    this.nodeImagesList.set(rootId, []);
-                }
-            }
-            const rImgsAll = this.nodeImagesList.get(rootId) || [];
-            const rImgs = rImgsAll.slice(0, this.linkImageParams.maxPerLink);
-            const virtualParent = { x: this.root.x, y: this.root.y };
-            if (this.layoutMode === 'horizontal') virtualParent.y = (this.root.y || 0) - 80; else virtualParent.y = (this.root.y || 0) - 80;
-            const virtualLink = { parent: virtualParent, x: this.root.x, y: this.root.y, id: `virtual-root-${rootId}`, data: { id: rootId } };
-            rImgs.forEach((img, idx) => {
-                flattened.push({ link: virtualLink, image: img, idx, count: rImgs.length, virtual: true });
-            });
-        }
 
         const selection = this.linkImagesContainer.selectAll('.link-image')
             .data(flattened, d => `${d.image?.id || d.image?.image_file_path || Math.random()}-${d.link.id}`);
@@ -1163,30 +992,15 @@ displayImages(images) {
 
         // Update positions and hrefs
         const imgBase = window.API_BASE_URL ? `${window.API_BASE_URL}` : '';
-        const size = this.linkImageParams.imageSize;
-        const br = this.linkImageParams.borderRadius;
-
-        // Ensure any new elements created on enter are selected properly
-        const merged = selection.enter()
-            .append('image')
-            .attr('class', 'link-image')
-            .merge(selection);
-
-        merged
-            .attr('width', size)
-            .attr('height', size)
-            .style('clip-path', `inset(0 round ${br}px)`)
+        selection.merge(enter.parent ? enter.parent() : selection)
             .attr('xlink:href', d => `${imgBase}/images/${encodeURIComponent(d.image.image_file_path)}`)
             .attr('transform', d => {
                 const s = d.link.parent; // source (parent)
                 const t = d.link; // target (child)
                 // Position images spaced along the line between s and t
-                const n = Math.max(1, d.count);
-                const i = Math.min(d.idx, n - 1);
-                const start = this.linkImageParams.startOffset;
-                const end = this.linkImageParams.endOffset;
-                const range = Math.max(0, end - start);
-                const tPos = (n === 1) ? (start + range/2) : (start + (range * (i / (n - 1))));
+                const n = d.count;
+                const i = d.idx;
+                const tPos = (n === 1) ? 0.5 : (0.3 + (0.4 * (i / (n - 1)))); // spread between 0.3 and 0.7
                 const interp = (a,b)=> a + (b-a)*tPos;
                 let px, py;
                 if (this.layoutMode === 'horizontal') {
@@ -1196,8 +1010,8 @@ displayImages(images) {
                     px = interp(s.x, t.x);
                     py = interp(s.y, t.y);
                 }
-                // Center the image based on configured size
-                return `translate(${px - size/2},${py - size/2})`;
+                // Center the image
+                return `translate(${px - 14},${py - 14})`;
             })
             .transition().duration(this.duration)
             .style('opacity', 1);
