@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Debug Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 2rem;
+            line-height: 1.6;
+        }
+        .debug { 
+            background: #f0f0f0; 
+            padding: 1rem; 
+            margin: 1rem 0;
+            border-left: 4px solid #333;
+        }
+        .content { 
+            border: 2px solid #ccc; 
+            padding: 1rem;
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Markdown Loading Test</h1>
+    
+    <div class="debug" id="debug-info">
+        Debug info will appear here...
+    </div>
+    
+    <div class="content" id="content">
+        Content will appear here...
+    </div>
+    
+    <!-- Load dependencies from node_modules -->
+    <script src="node_modules/marked/marked.min.js"></script>
+    <script src="node_modules/dompurify/dist/purify.min.js"></script>
+    
+    <script>
+        async function testSimpleLoad() {
+            const debugEl = document.getElementById('debug-info');
+            const contentEl = document.getElementById('content');
+            
+            function log(message) {
+                console.log(message);
+                debugEl.innerHTML += '<div>' + message + '</div>';
+            }
+            
+            try {
+                log('🚀 Starting simple load test...');
+                
+                // Test 1: Can we fetch the file?
+                log('📁 Trying to fetch ./PROJECT_SPECIFICATION.md');
+                const response = await fetch('./PROJECT_SPECIFICATION.md');
+                log(`📊 Response: ${response.status} ${response.ok ? 'OK' : 'ERROR'}`);
+                
+                if (!response.ok) {
+                    log('❌ Fetch failed');
+                    return;
+                }
+                
+                // Test 2: Can we read the content?
+                const markdown = await response.text();
+                log(`📝 Markdown loaded: ${markdown.length} characters`);
+                log(`📝 First 100 chars: ${markdown.substring(0, 100)}...`);
+                
+                // Test 3: Can we parse it?
+                const html = marked.parse(markdown);
+                log(`🔧 HTML parsed: ${html.length} characters`);
+                
+                // Test 4: Can we sanitize it?
+                const sanitized = DOMPurify.sanitize(html);
+                log(`🧼 HTML sanitized: ${sanitized.length} characters`);
+                
+                // Test 5: Can we insert it?
+                log('📋 Inserting into DOM...');
+                contentEl.innerHTML = sanitized;
+                
+                // Test 6: Did it stick?
+                setTimeout(() => {
+                    const finalContent = contentEl.innerHTML;
+                    log(`✅ Final DOM content: ${finalContent.length} characters`);
+                    log(`👁️ Visible text: ${contentEl.textContent.trim().substring(0, 100)}...`);
+                    
+                    if (finalContent.length > 0) {
+                        log('🎉 SUCCESS: Content was inserted and is visible!');
+                    } else {
+                        log('💥 FAILURE: Content was not inserted or was cleared!');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                console.error('Full error:', error);
+            }
+        }
+        
+        // Run the test when page loads
+        document.addEventListener('DOMContentLoaded', testSimpleLoad);
+    </script>
+</body>
+</html>

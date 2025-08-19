@@ -9,8 +9,9 @@ class DocumentRenderer {
         this.currentPageNumber = 1;
         this.tocEntries = [];
         
-        // Configure marked.js
-        marked.setOptions({
+        // Configure marked.js (use global from CDN)
+        const md = window.marked || marked;
+        md.setOptions({
             highlight: function(code, lang) {
                 if (Prism.languages[lang]) {
                     return Prism.highlight(code, Prism.languages[lang], lang);
@@ -20,14 +21,29 @@ class DocumentRenderer {
             breaks: true,
             gfm: true
         });
+        this._md = md;
     }
 
     async init() {
         try {
-            await this.loadMarkdown();
-            this.generateTOC();
-            this.enhanceContent();
-            this.setupPagedJS();
+            const contentLoaded = await this.loadMarkdown();
+            
+            if (contentLoaded) {
+                console.log('[renderer] Content loaded successfully, proceeding with enhancements...');
+                this.generateTOC();
+                this.enhanceContent();
+                
+                // Only setup Paged.js if not disabled
+                const params = new URLSearchParams(window.location.search);
+                if (!params.has('nopaged')) {
+                    // Delay Paged.js setup to allow DOM to settle
+                    setTimeout(() => this.setupPagedJS(), 100);
+                } else {
+                    console.log('[renderer] Paged.js disabled, content ready for viewing');
+                }
+            } else {
+                console.error('[renderer] Content loading failed');
+            }
         } catch (error) {
             console.error('Error initializing document:', error);
             this.showError(error);
@@ -35,27 +51,114 @@ class DocumentRenderer {
     }
 
     async loadMarkdown() {
+        const contentEl = document.getElementById('content');
+        console.log('[renderer] Starting markdown load...');
         try {
-            // Try to load from the parent directory
-            const response = await fetch('../PROJECT_SPECIFICATION.md');
+            // First try to load from local docs directory (copied by build script)
+            console.log('[renderer] Trying ./PROJECT_SPECIFICATION.md');
+            let response = await fetch('./PROJECT_SPECIFICATION.md');
+            console.log('[renderer] Local fetch response:', response.status, response.ok);
+            if (!response.ok) {
+                // Then try parent directory as a fallback (works if server serves parent)
+                console.log('[renderer] Trying ../PROJECT_SPECIFICATION.md');
+                response = await fetch('../PROJECT_SPECIFICATION.md');
+                console.log('[renderer] Parent fetch response:', response.status, response.ok);
+            }
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const markdown = await response.text();
-            const html = marked.parse(markdown);
+            let markdown = await response.text();
+            // Strip UTF-8 BOM if present
+            if (markdown.charCodeAt(0) === 0xFEFF) {
+                console.log('[renderer] Stripping UTF-8 BOM');
+                markdown = markdown.slice(1);
+            }
+            console.log(`[renderer] Loaded markdown: ${markdown.length} chars`);
+            const html = this._md.parse(markdown);
+            console.log(`[renderer] Parsed HTML: ${html.length} chars`);
             const sanitizedHtml = DOMPurify.sanitize(html);
+            console.log(`[renderer] Sanitized HTML: ${sanitizedHtml.length} chars`);
             
-            document.getElementById('content').innerHTML = sanitizedHtml;
+            if (sanitizedHtml.length < html.length * 0.5) {
+                console.warn('[renderer] Sanitization removed significant content. Check DOMPurify config.');
+            }
+            
+            if (contentEl) {
+                console.log('[renderer] Content element found, proceeding with insertion...');
+                
+                // Wrap content in a container for Paged.js stability
+                const wrappedContent = `<div class="markdown-body">${sanitizedHtml}</div>`;
+                console.log('[renderer] Wrapped content prepared:', wrappedContent.length, 'chars');
+                
+                // Clear any existing content first
+                contentEl.innerHTML = '';
+                console.log('[renderer] Content element cleared');
+                
+                // Insert the new content
+                contentEl.innerHTML = wrappedContent;
+                console.log('[renderer] Content inserted via innerHTML');
+                
+                // Immediate verification
+                const immediateLength = contentEl.innerHTML.length;
+                const immediateText = contentEl.textContent.trim();
+                const hasMarkdownBody = !!contentEl.querySelector('.markdown-body');
+                
+                console.log('[renderer] Immediate verification:', {
+                    htmlLength: immediateLength,
+                    textLength: immediateText.length,
+                    hasWrapper: hasMarkdownBody,
+                    preview: immediateText.substring(0, 50)
+                });
+                
+                // Wait a moment and check again
+                setTimeout(() => {
+                    const delayedLength = contentEl.innerHTML.length;
+                    const delayedText = contentEl.textContent.trim();
+                    const stillHasWrapper = !!contentEl.querySelector('.markdown-body');
+                    
+                    console.log('[renderer] Delayed verification (100ms):', {
+                        htmlLength: delayedLength,
+                        textLength: delayedText.length,
+                        hasWrapper: stillHasWrapper,
+                        changed: delayedLength !== immediateLength
+                    });
+                }, 100);
+                
+                if (immediateText.length > 100) {
+                    console.log('[renderer] Content successfully rendered');
+                    return true; // Success!
+                } else {
+                    console.warn('[renderer] Content appears empty after render');
+                    contentEl.innerHTML = `
+                        <div class="warning-box">
+                            <h2>No content rendered</h2>
+                            <p>The markdown was loaded (${markdown.length} chars) but produced no visible content. Possible causes:</p>
+                            <ul>
+                                <li>Markdown contains only headings hidden by print pagination before Paged.js finishes</li>
+                                <li>Sanitization removed all content</li>
+                                <li>Styles are hiding the content</li>
+                            </ul>
+                            <p>Try adding ?nopaged to the URL to bypass pagination, or check the browser console for errors.</p>
+                        </div>`;
+                    return false;
+                }
+            } else {
+                console.error('[renderer] Content element not found!');
+            }
+            return false;
         } catch (error) {
-            console.warn('Could not load from parent directory, trying local copy');
+            console.warn('Could not load specification markdown:', error);
             // Fallback: show instructions to copy the file
             this.showCopyInstructions();
+            return false;
         }
     }
 
     showCopyInstructions() {
-        document.getElementById('content').innerHTML = `
+        const el = document.getElementById('content');
+        if (!el) return;
+        el.innerHTML = `
             <div class="info-box" style="margin: 2rem 0; text-align: center;">
                 <h2>Setup Required</h2>
                 <p>To render the documentation, please copy your <code>PROJECT_SPECIFICATION.md</code> file to the <code>docs</code> directory, or run a local server from the project root.</p>
@@ -65,7 +168,9 @@ class DocumentRenderer {
     }
 
     showError(error) {
-        document.getElementById('content').innerHTML = `
+        const el = document.getElementById('content');
+        if (!el) return;
+        el.innerHTML = `
             <div class="warning-box" style="margin: 2rem 0;">
                 <h2>Error Loading Document</h2>
                 <p>There was an error loading the PROJECT_SPECIFICATION.md file:</p>
@@ -77,8 +182,20 @@ class DocumentRenderer {
 
     generateTOC() {
         const content = document.getElementById('content');
-        const headings = content.querySelectorAll('h1, h2, h3');
         const tocContainer = document.getElementById('toc');
+        
+        if (!content || !tocContainer) {
+            console.warn('[renderer] Content or TOC container not found, skipping TOC generation');
+            return;
+        }
+        
+        const headings = content.querySelectorAll('h1, h2, h3');
+        
+        if (headings.length === 0) {
+            console.warn('[renderer] No headings found for TOC');
+            tocContainer.innerHTML = '<div class="toc-entry">No sections found</div>';
+            return;
+        }
         
         this.tocEntries = [];
         
@@ -123,8 +240,18 @@ class DocumentRenderer {
     enhanceContent() {
         const content = document.getElementById('content');
         
+        if (!content) {
+            console.warn('[renderer] Content element not found, skipping enhancements');
+            return;
+        }
+        
         // Enhance code blocks
         this.enhanceCodeBlocks(content);
+
+        // Trigger Prism highlighting for inserted content
+        if (window.Prism && Prism.highlightAllUnder) {
+            try { Prism.highlightAllUnder(content); } catch (e) { console.warn('Prism highlight failed', e); }
+        }
         
         // Enhance tables
         this.enhanceTables(content);
@@ -194,7 +321,7 @@ class DocumentRenderer {
             if (index > 0) {
                 h1.classList.add('page-break');
             }
-            h1.classList.add('keep-with-next');
+            // Do NOT keep-with-next on h1 to avoid large unbreakable blocks
         });
 
         const h2Elements = content.querySelectorAll('h2');
@@ -214,6 +341,17 @@ class DocumentRenderer {
             block.parentElement.parentElement.insertBefore(mermaidDiv, block.parentElement);
             block.parentElement.remove();
         });
+
+        // Initialize Mermaid if available
+        if (window.mermaid) {
+            try {
+                const darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                mermaid.initialize({ startOnLoad: false, theme: darkMode ? 'dark' : 'default' });
+                mermaid.init(undefined, content.querySelectorAll('.mermaid'));
+            } catch (e) {
+                console.warn('Mermaid render failed', e);
+            }
+        }
     }
 
     enhanceInterfaceDefinitions(content) {
@@ -249,7 +387,25 @@ class DocumentRenderer {
         });
     }
 
-    setupPagedJS() {
+    async setupPagedJS() {
+        // Option to skip Paged.js for debugging
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('nopaged')) {
+            console.warn('[renderer] Paged.js disabled via ?nopaged');
+            return;
+        }
+
+        if (typeof Paged === 'undefined' || !Paged) {
+            console.log('[renderer] Paged.js not loaded; loading dynamically...');
+            try {
+                await this.loadScript('node_modules/pagedjs/dist/paged.polyfill.js');
+                console.log('[renderer] Paged.js loaded');
+            } catch (e) {
+                console.warn('[renderer] Failed to load Paged.js dynamically:', e);
+                return;
+            }
+        }
+
         // Configure Paged.js hooks
         class MyHandler extends Paged.Handler {
             constructor(chunker, polisher, caller) {
@@ -340,16 +496,75 @@ class DocumentRenderer {
             }
         }
 
-        // Register the handler
-        Paged.registerHandlers(MyHandler);
+        // Register the handler safely
+        try {
+            Paged.registerHandlers(MyHandler);
+        } catch (e) {
+            console.error('[renderer] Failed to register Paged.js handler:', e);
+            // Show non-paged content and hint
+            const el = document.getElementById('content');
+            if (el) {
+                const hint = document.createElement('div');
+                hint.className = 'warning-box';
+                hint.innerHTML = '<strong>Pagination disabled:</strong> The print engine encountered an error and was disabled. You can still read the content, or add ?nopaged to the URL to suppress this notice.';
+                el.prepend(hint);
+            }
+        }
+    }
+
+    loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = () => resolve();
+            s.onerror = (e) => reject(e);
+            document.head.appendChild(s);
+        });
     }
 }
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializeRenderer() {
+    console.log('[app] Initializing renderer...');
+    
+    // Wait for DOM to be completely ready
+    if (document.readyState !== 'complete') {
+        console.log('[app] Waiting for document to be complete...');
+        await new Promise(resolve => {
+            if (document.readyState === 'complete') {
+                resolve();
+            } else {
+                window.addEventListener('load', resolve);
+            }
+        });
+    }
+    
+    // Double-check that required elements exist
+    const contentEl = document.getElementById('content');
+    const tocEl = document.getElementById('toc');
+    
+    console.log('[app] DOM readiness check:', {
+        readyState: document.readyState,
+        contentExists: !!contentEl,
+        tocExists: !!tocEl
+    });
+    
+    if (!contentEl) {
+        console.error('[app] Content element not found! Cannot initialize renderer.');
+        return;
+    }
+    
     const renderer = new DocumentRenderer();
     await renderer.init();
-});
+}
+
+// Try multiple initialization strategies
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRenderer);
+} else {
+    // DOM is already ready
+    initializeRenderer();
+}
 
 // Add some utility functions
 window.printDocument = function() {

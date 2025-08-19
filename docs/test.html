@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Documentation Renderer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-content">
+            <div class="cover-title-section">
+                <h1 class="cover-title">Test Document</h1>
+                <h2 class="cover-subtitle">Working Fine!</h2>
+                <div class="cover-tagline">This should render without errors</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc-page">
+        <h1 class="toc-title">Table of Contents</h1>
+        <nav class="table-of-contents" id="toc">
+            <div class="toc-entry level-1">
+                <span class="toc-title-text">Section 1</span>
+                <span class="toc-page-number">3</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <main id="content">
+        <div class="markdown-body">
+            <h1>Section 1</h1>
+            <p>This is a test paragraph to verify the system works.</p>
+            
+            <h2>Code Example</h2>
+            <pre><code class="language-javascript">
+console.log("Hello World!");
+            </code></pre>
+            
+            <p>If you can see this content, the renderer is working correctly!</p>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="node_modules/marked/marked.min.js"></script>
+    <script src="node_modules/prismjs/components/prism-core.min.js"></script>
+    <script src="node_modules/dompurify/dist/purify.min.js"></script>
+    <script src="node_modules/pagedjs/dist/paged.polyfill.js"></script>
+    <script>
+        console.log('Test page loaded successfully');
+        console.log('Marked available:', typeof marked !== 'undefined');
+        console.log('Prism available:', typeof Prism !== 'undefined');  
+        console.log('DOMPurify available:', typeof DOMPurify !== 'undefined');
+        console.log('Paged available:', typeof Paged !== 'undefined');
+    </script>
+</body>
+</html>
