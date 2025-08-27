@@ -1,0 +1,6 @@
+{
+  "timestamp": "20250826_164400",
+  "audio_file": "20250826_164400_recording.webm",
+  "transcript": "And this is a test.",
+  "processing_result": "{\n  \"segments\": [\n    {\n      \"id\": \"C1\",\n      \"category\": \"Planning\",\n      \"summary\": \"This segment represents the initial stage of defining the project or task. It focuses on establishing the overall scope and desired outcomes.\",\n      \"confidence\": 0.95,\n      \"connections\": [],\n      \"text_ranges\": [\n        {\n          \"start_char\": 0,\n          \"end_char\": 13,\n          \"excerpt\": \"And this is a test.\",\n          \"relevance\": 1.0,\n          \"actual_text\": \"And this is a\",\n          \"corrected_start_char\": 0,\n          \"corrected_end_char\": 19,\n          \"corrected_text\": \"And this is a test.\"\n        }\n      ]\n    }\n  ],\n  \"connections_summary\": [],\n  \"open_topics\": [\n    {\n      \"topic\": \"Test Purpose\",\n      \"question\": \"What is the specific goal of this test?\",\n      \"related_segments\": [\n        \"C1\"\n      ],\n      \"status\": \"Unanswered\"\n    }\n  ]\n}"
+}

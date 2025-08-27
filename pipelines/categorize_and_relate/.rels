@@ -1,0 +1,127 @@
+{
+  "codebase": "branches-conversation-tree",
+  "project": "pipelines/categorize_and_relate",
+  "generated_at": "2025-08-27T16:53:45Z",
+  "nodes": [
+    {"id": "sys_categorize_relate", "type": "SYSTEM", "name": "Categorize & Relate Pipeline", "path": "pipelines/categorize_and_relate", "metadata": {"language": "python", "stack": ["FastAPI", "faster-whisper", "Ollama", "uv"]}},
+
+    {"id": "mod_server", "type": "MODULE", "name": "Server (FastAPI)", "path": "server", "metadata": {"port": 8000}},
+    {"id": "file_server_main", "type": "FILE", "name": "server/main.py", "path": "server/main.py"},
+    {"id": "fn_transcribe_with_whisper", "type": "FUNCTION", "name": "transcribe_with_whisper", "path": "server/main.py#transcribe_with_whisper"},
+    {"id": "fn_run_categorize_and_relate", "type": "FUNCTION", "name": "run_categorize_and_relate", "path": "server/main.py#run_categorize_and_relate"},
+
+    {"id": "file_run_py", "type": "FILE", "name": "run.py", "path": "run.py"},
+    {"id": "fn_call_ollama", "type": "FUNCTION", "name": "call_ollama", "path": "run.py#call_ollama"},
+
+    {"id": "file_cli_py", "type": "FILE", "name": "cli.py", "path": "cli.py"},
+    {"id": "mod_web", "type": "MODULE", "name": "Web UI", "path": "web"},
+    {"id": "dir_recordings", "type": "MODULE", "name": "Recordings Store", "path": "recordings"},
+
+    {"id": "doc_error_handling", "type": "SPECIFICATION", "name": "ERROR_HANDLING_IMPROVEMENTS.md", "path": "ERROR_HANDLING_IMPROVEMENTS.md"},
+    {"id": "doc_storage_orchestration", "type": "SPECIFICATION", "name": "Pipeline_Storage_and_Orchestration.md", "path": "docs/Pipeline_Storage_and_Orchestration.md"}
+  ],
+  "relations": [
+    {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "mod_server"},
+    {"type": "CONTAINS", "source": "mod_server", "target": "file_server_main"},
+    {"type": "CONTAINS", "source": "file_server_main", "target": "fn_transcribe_with_whisper"},
+    {"type": "CONTAINS", "source": "file_server_main", "target": "fn_run_categorize_and_relate"},
+
+    {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "file_run_py"},
+    {"type": "CONTAINS", "source": "file_run_py", "target": "fn_call_ollama"},
+
+    {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "file_cli_py"},
+    {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "mod_web"},
+    {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "dir_recordings"},
+
+    {"type": "USES", "source": "fn_transcribe_with_whisper", "target": "dir_recordings", "metadata": {"purpose": "read/write audio"}},
+    {"type": "CALLS", "source": "fn_run_categorize_and_relate", "target": "file_run_py", "metadata": {"via": "subprocess uv run python run.py"}},
+    {"type": "CALLS", "source": "fn_call_ollama", "target": "doc_storage_orchestration", "metadata": {"note": "reference for artifactization plan"}},
+    {"type": "DEPENDS_ON", "source": "file_run_py", "target": "fn_call_ollama"},
+
+    {"type": "SUPPORTS", "source": "doc_error_handling", "target": "file_server_main"},
+    {"type": "SUPPORTS", "source": "doc_storage_orchestration", "target": "sys_categorize_relate"}
+  ],
+  "tasks": [
+    {
+      "id": "task_fix_ollama_host",
+      "name": "Fix Ollama client host in run.py",
+      "description": "Use explicit host http://localhost:11434 in Ollama client",
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["file_run_py", "fn_call_ollama"]
+    },
+    {
+      "id": "task_improve_errors",
+      "name": "Improve error messages (server and pipeline)",
+      "description": "Provide actionable, structured error messages across server/main.py and run.py",
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["file_server_main", "file_run_py", "doc_error_handling"]
+    },
+    {
+      "id": "task_server_uv_invoke",
+      "name": "Invoke pipeline via uv from server",
+      "description": "Update server to call `uv run python run.py` for consistent env",
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["file_server_main", "file_run_py"]
+    },
+    {
+      "id": "task_test_endpoint",
+      "name": "Add /test-categorization endpoint",
+      "description": "Bypass transcription to test categorization from server",
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["file_server_main"]
+    },
+    {
+      "id": "task_artifacts_phase1",
+      "name": "Phase 1: Artifactize pipeline outputs",
+      "description": "Introduce run_id session dirs and persist all intermediate artifacts as per docs.",
+      "status": "TODO",
+      "progress": 0.0,
+      "relatedComponentIds": ["sys_categorize_relate", "file_server_main", "file_run_py", "dir_recordings", "doc_storage_orchestration"]
+    },
+    {
+      "id": "task_observability_phase2",
+      "name": "Phase 2: Observability & retention",
+      "description": "Add timings, structured errors, retention job; CLI to inspect runs.",
+      "status": "TODO",
+      "progress": 0.0,
+      "relatedComponentIds": ["sys_categorize_relate", "doc_storage_orchestration"]
+    },
+    {
+      "id": "task_orchestration_prefect",
+      "name": "Phase 3: Orchestration (Prefect initial flow)",
+      "description": "Split steps into tasks (transcribe -> analyze -> post-process -> persist).",
+      "status": "TODO",
+      "progress": 0.0,
+      "relatedComponentIds": ["sys_categorize_relate"]
+    },
+    {
+      "id": "task_temporal_poc",
+      "name": "Temporal PoC for durable orchestration",
+      "description": "Prototype durable workflows with retries, signals, and timers.",
+      "status": "TODO",
+      "progress": 0.0,
+      "relatedComponentIds": ["sys_categorize_relate"]
+    },
+    {
+      "id": "task_storage_docs",
+      "name": "Document storage and orchestration plan",
+      "description": "Write docs/Pipeline_Storage_and_Orchestration.md",
+      "status": "IN_PROGRESS",
+      "progress": 0.8,
+      "relatedComponentIds": ["doc_storage_orchestration"]
+    }
+  ],
+  "comments": [
+    {
+      "nodeId": "task_storage_docs",
+      "author": "user",
+      "content": "is every output stored? including every intermediate step? consider which framework is good to chain it all up and whether temporal orchestration would be beneficial at any point document everything",
+      "created_at": "2025-08-27T16:53:45Z"
+    }
+  ]
+}
+

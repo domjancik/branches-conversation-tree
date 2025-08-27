@@ -143,12 +143,40 @@ def inject_into_prompt(prompt: str, input_text: str, categories_json_raw: Option
 
 def call_ollama(prompt_text: str, model: str, temperature: float, seed: int) -> Tuple[int, str]:
     if ollama is None:
-        raise RuntimeError(
-            "Ollama Python SDK not installed. Install with: pip install ollama"
+        return 1, (
+            "Ollama Python SDK not available. Please install it with: pip install ollama\n"
+            "Also ensure Ollama is installed and running. Visit https://ollama.com for setup instructions."
         )
+    
     # Use the SDK generate API with options
     try:
-        resp = ollama.generate(
+        # Create client with explicit host to ensure connection
+        client = ollama.Client(host='http://localhost:11434')
+        
+        # Test connection first
+        try:
+            client.list()  # Simple API call to test connection
+        except Exception as conn_e:
+            return 1, (
+                f"Cannot connect to Ollama service at http://localhost:11434. "
+                f"Please ensure Ollama is running by executing 'ollama serve' in another terminal. "
+                f"Connection error: {conn_e}"
+            )
+        
+        # Check if model exists
+        try:
+            models = client.list()
+            available_models = [m['name'] for m in models.get('models', [])]
+            if model not in available_models:
+                return 1, (
+                    f"AI model '{model}' not found. Available models: {', '.join(available_models)}. "
+                    f"Install the required model with: ollama pull {model}"
+                )
+        except Exception as model_e:
+            # Continue anyway - model check failed but generation might still work
+            pass
+        
+        resp = client.generate(
             model=model,
             prompt=prompt_text,
             options={
@@ -157,9 +185,25 @@ def call_ollama(prompt_text: str, model: str, temperature: float, seed: int) -> 
             },
         )
     except Exception as e:
-        # Mirror the previous interface: nonzero code and captured output
-        msg = f"ollama SDK call failed: {e}"
-        return 1, msg
+        # Provide more specific error messages
+        error_msg = str(e).lower()
+        if "connection" in error_msg or "connect" in error_msg:
+            return 1, (
+                f"Cannot connect to Ollama service. Please ensure Ollama is running with 'ollama serve'. "
+                f"Visit https://ollama.com for setup instructions. Error: {e}"
+            )
+        elif "model" in error_msg and "not found" in error_msg:
+            return 1, (
+                f"AI model '{model}' not found. Please install it with: ollama pull {model}. "
+                f"Error: {e}"
+            )
+        elif "timeout" in error_msg:
+            return 1, (
+                f"AI model request timed out. The model may be too large or busy. "
+                f"Try using a smaller model like 'gemma2:2b'. Error: {e}"
+            )
+        else:
+            return 1, f"AI generation failed: {e}"
     # The SDK returns a GenerateResponse object with 'response' attribute
     if hasattr(resp, 'response'):
         text = resp.response
@@ -187,20 +231,54 @@ def main(argv: list[str]) -> int:
     script_dir = Path(__file__).resolve().parent
     prompt_path = script_dir / "prompt.md"
     if not prompt_path.is_file():
-        print(f"prompt.md not found at {prompt_path}", file=sys.stderr)
+        print(f"Configuration error: prompt.md not found at {prompt_path}. "
+              f"Please ensure the pipeline is properly set up with all required files.", file=sys.stderr)
         return 2
 
-    prompt_template = read_text(prompt_path)
-    input_text = read_input_text(args.input)
+    try:
+        prompt_template = read_text(prompt_path)
+    except Exception as e:
+        print(f"Configuration error: Could not read prompt.md file. Error: {e}", file=sys.stderr)
+        return 2
+    
+    try:
+        input_text = read_input_text(args.input)
+    except ValueError as e:
+        print(f"Input error: {e}", file=sys.stderr)
+        return 2
+    except FileNotFoundError as e:
+        print(f"Input error: {e}", file=sys.stderr)
+        return 2
+    except Exception as e:
+        print(f"Input error: Could not read input. Error: {e}", file=sys.stderr)
+        return 2
+    
+    if not input_text or not input_text.strip():
+        print(f"Input error: Empty input provided. Please provide some text to categorize.", file=sys.stderr)
+        return 2
 
     categories_raw = None
     if args.categories is not None:
         if not args.categories.is_file():
-            print(f"Categories path not found: {args.categories}", file=sys.stderr)
+            print(f"Categories error: Categories file not found at {args.categories}. "
+                  f"Either remove --categories or provide a valid JSON file.", file=sys.stderr)
             return 2
-        categories_raw = read_text(args.categories)
+        try:
+            categories_raw = read_text(args.categories)
+            # Validate JSON format
+            json.loads(categories_raw)
+        except json.JSONDecodeError as e:
+            print(f"Categories error: Invalid JSON in categories file {args.categories}. Error: {e}", file=sys.stderr)
+            return 2
+        except Exception as e:
+            print(f"Categories error: Could not read categories file {args.categories}. Error: {e}", file=sys.stderr)
+            return 2
 
-    extra_vars = load_template_vars(args.var or [], args.vars_json)
+    try:
+        extra_vars = load_template_vars(args.var or [], args.vars_json)
+    except Exception as e:
+        print(f"Template variables error: {e}", file=sys.stderr)
+        return 2
 
     rendered = inject_into_prompt(prompt_template, input_text, categories_raw)
     if extra_vars:
