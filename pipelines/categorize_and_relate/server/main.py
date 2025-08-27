@@ -11,6 +11,10 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+# Import session manager
+sys.path.append(str(Path(__file__).parent.parent))
+from session_manager import SessionManager, SessionContext
+
 # Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
 PIPELINE_DIR = SCRIPT_DIR.parent
@@ -20,6 +24,9 @@ RECORDINGS_DIR = PIPELINE_DIR / "recordings"
 
 # Ensure recordings directory exists
 RECORDINGS_DIR.mkdir(exist_ok=True)
+
+# Initialize session manager
+session_manager = SessionManager(RECORDINGS_DIR)
 
 app = FastAPI(title="Categorize & Relate Audio Pipeline")
 
@@ -38,7 +45,7 @@ def health():
 
 @app.get("/recordings")
 def list_recordings():
-    """List all saved recordings with metadata."""
+    """List all saved recordings with metadata (backwards compatibility)."""
     recordings = []
     
     for metadata_file in RECORDINGS_DIR.glob("*_metadata.json"):
@@ -58,6 +65,80 @@ def list_recordings():
         "recordings": recordings,
         "count": len(recordings)
     }
+
+
+@app.get("/sessions")
+def list_sessions():
+    """List all pipeline sessions with metadata."""
+    sessions = session_manager.list_sessions()
+    return {
+        "sessions": sessions,
+        "count": len(sessions)
+    }
+
+
+@app.get("/sessions/{session_id}")
+def get_session(session_id: str):
+    """Get detailed information about a specific session."""
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session {session_id} not found"
+        )
+    
+    return {
+        "session_id": session_id,
+        "metadata": session.get_metadata(),
+        "artifacts": session.list_artifacts(),
+        "summary": session.get_summary()
+    }
+
+
+@app.get("/sessions/{session_id}/artifacts/{artifact_name}")
+def get_session_artifact(session_id: str, artifact_name: str):
+    """Retrieve a specific artifact from a session."""
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session {session_id} not found"
+        )
+    
+    if not session.has_artifact(artifact_name):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Artifact {artifact_name} not found in session {session_id}"
+        )
+    
+    artifact = session.get_artifact(artifact_name)
+    artifact_info = session.get_artifact_info(artifact_name)
+    
+    return {
+        "artifact_name": artifact_name,
+        "content": artifact,
+        "metadata": artifact_info
+    }
+
+
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: str):
+    """Delete a session and all its artifacts."""
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session {session_id} not found"
+        )
+    
+    try:
+        session.cleanup()
+        return {"message": f"Session {session_id} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete session {session_id}: {e}"
+        )
 
 
 def transcribe_with_whisper(audio_path: Path) -> str:
@@ -228,6 +309,7 @@ async def test_categorization(text: str):
 
 @app.post("/process-audio")
 async def process_audio(file: UploadFile = File(...)):
+    """Process audio file with session-based artifact storage."""
     # Validate file upload
     if not file or not file.filename:
         raise HTTPException(
@@ -235,7 +317,7 @@ async def process_audio(file: UploadFile = File(...)):
             detail="Audio processing failed: No file uploaded. Please select an audio file to process."
         )
     
-    # Check file size (optional, but helpful)
+    # Check file size
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
     if hasattr(file, 'size') and file.size and file.size > MAX_FILE_SIZE:
         raise HTTPException(
@@ -243,112 +325,215 @@ async def process_audio(file: UploadFile = File(...)):
             detail=f"Audio processing failed: File too large ({file.size / 1024 / 1024:.1f}MB). Maximum size is {MAX_FILE_SIZE / 1024 / 1024}MB."
         )
     
-    # Generate timestamp-based filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    suffix = Path(file.filename or "upload").suffix or ".webm"
-    audio_filename = f"{timestamp}_recording{suffix}"
-    audio_path = RECORDINGS_DIR / audio_filename
-    
-    try:
-        # Save uploaded audio persistently
+    # Use session manager for organized artifact storage
+    with SessionContext(session_manager) as session:
         try:
-            data = await file.read()
-            if not data:
+            session.update_status('audio_upload', 'Processing uploaded audio file')
+            
+            # Read and validate audio data
+            audio_data = await file.read()
+            if not audio_data:
                 raise HTTPException(
                     status_code=400,
                     detail="Audio processing failed: Empty file uploaded. Please record some audio first."
                 )
-            audio_path.write_bytes(data)
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Audio processing failed: Could not save uploaded file. Error: {e}"
-            )
-        
-        # Transcribe audio
-        try:
-            transcript = transcribe_with_whisper(audio_path)
-        except HTTPException:
-            raise  # Re-raise detailed transcription errors
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Audio processing failed: Unexpected error during transcription. Error: {e}"
-            )
-        
-        # Categorize transcript
-        try:
-            output_text = run_categorize_and_relate(transcript)
-        except HTTPException:
-            raise  # Re-raise detailed categorization errors
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Audio processing failed: Unexpected error during categorization. Error: {e}"
-            )
-
-        # Save metadata alongside audio
-        try:
-            metadata = {
-                "timestamp": timestamp,
-                "audio_file": audio_filename,
-                "transcript": transcript,
-                "processing_result": output_text
-            }
-            metadata_path = RECORDINGS_DIR / f"{timestamp}_metadata.json"
-            metadata_path.write_text(json.dumps(metadata, indent=2))
-        except Exception as e:
-            # Non-critical error - log but don't fail
-            print(f"Warning: Could not save metadata: {e}")
-
-        # Parse and return results
-        try:
-            obj = json.loads(output_text)
-            # Include metadata in response
-            response_obj = {
-                "result": obj,
-                "metadata": {
-                    "audio_file": audio_filename,
-                    "transcript": transcript,
-                    "timestamp": timestamp
+            
+            # Save original audio file
+            original_filename = file.filename or "upload.webm"
+            suffix = Path(original_filename).suffix or ".webm"
+            audio_filename = f"audio{suffix}"
+            
+            session.save_artifact(
+                audio_filename, 
+                audio_data, 
+                'binary',
+                metadata={
+                    'original_filename': original_filename,
+                    'content_type': file.content_type,
+                    'file_size': len(audio_data)
                 }
-            }
-            return JSONResponse(response_obj)
-        except json.JSONDecodeError as e:
-            # AI returned non-JSON - this might be a problem but let's return it anyway
-            return JSONResponse({
-                "result": output_text,
-                "metadata": {
-                    "audio_file": audio_filename,
-                    "transcript": transcript,
-                    "timestamp": timestamp
-                },
-                "warning": "AI returned non-JSON response - this may indicate an issue with the categorization."
-            })
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Audio processing failed: Could not format response. Raw output available but may be malformed. Error: {e}"
             )
             
-    except HTTPException:
-        # Clean up on HTTP errors (these have user-friendly messages)
-        if audio_path.exists():
+            # Get audio path for processing
+            audio_path = session.session_dir / "artifacts" / audio_filename
+            
+            session.update_status('transcribing', 'Transcribing audio with Whisper')
+            
+            # Transcribe audio
             try:
-                audio_path.unlink()
-            except Exception:
-                pass
-        raise
-    except Exception as e:
-        # Clean up on unexpected errors
-        if audio_path.exists():
+                from faster_whisper import WhisperModel
+                model_name = os.environ.get("FAST_WHISPER_MODEL", "small")
+                device = os.environ.get("WHISPER_DEVICE", "cpu")
+                
+                model = WhisperModel(model_name, device=device)
+                segments, info = model.transcribe(str(audio_path), beam_size=1)
+                
+                # Save detailed transcription info
+                detailed_segments = []
+                transcript_parts = []
+                
+                for seg in segments:
+                    segment_info = {
+                        'start': seg.start,
+                        'end': seg.end,
+                        'text': seg.text,
+                        'no_speech_prob': getattr(seg, 'no_speech_prob', None),
+                        'avg_logprob': getattr(seg, 'avg_logprob', None)
+                    }
+                    detailed_segments.append(segment_info)
+                    transcript_parts.append(seg.text)
+                
+                transcript = " ".join(transcript_parts).strip()
+                
+                if not transcript:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Audio transcription failed: Whisper produced empty transcript. "
+                               "The audio file may be too quiet, corrupted, or contain no speech."
+                    )
+                
+                # Save transcription artifacts
+                session.save_artifact('transcript', transcript, 'text')
+                session.save_intermediate('whisper', 'detailed_segments', detailed_segments, 'json')
+                session.save_intermediate('whisper', 'model_info', {
+                    'model_name': model_name,
+                    'device': device,
+                    'language': info.language,
+                    'language_probability': info.language_probability,
+                    'duration': info.duration
+                }, 'json')
+                
+            except ImportError as e:
+                session.log_error(f"faster-whisper not installed: {e}", 'transcription')
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Audio transcription failed: faster-whisper package not installed. Install with: pip install faster-whisper. Error: {e}"
+                )
+            except Exception as e:
+                session.log_error(f"Transcription error: {e}", 'transcription')
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Audio transcription failed: Error during transcription process. Error: {e}"
+                )
+            
+            session.update_status('categorizing', 'Running categorization pipeline')
+            
+            # Run categorization pipeline
             try:
-                audio_path.unlink()
-            except Exception:
-                pass
-        raise HTTPException(
-            status_code=500,
-            detail=f"Audio processing failed: An unexpected error occurred. Please try again. Error: {e}"
-        )
+                cmd = ["uv", "run", "python", str(RUN_PY)]
+                if CATEGORIES_JSON.is_file():
+                    cmd += ["--categories", str(CATEGORIES_JSON)]
+                
+                proc = subprocess.run(
+                    cmd,
+                    input=transcript,
+                    text=True,
+                    capture_output=True,
+                    cwd=str(PIPELINE_DIR),
+                    check=False,
+                    timeout=60
+                )
+                
+                # Save pipeline execution details
+                session.save_intermediate('pipeline', 'execution_info', {
+                    'command': cmd,
+                    'return_code': proc.returncode,
+                    'execution_time': datetime.now().isoformat()
+                }, 'json')
+                
+                if proc.stderr:
+                    session.save_intermediate('pipeline', 'stderr', proc.stderr, 'text')
+                if proc.stdout:
+                    session.save_intermediate('pipeline', 'stdout', proc.stdout, 'text')
+                
+                if proc.returncode != 0:
+                    error_msg = proc.stderr or proc.stdout or "Unknown error"
+                    session.log_error(f"Pipeline failed: {error_msg}", 'categorization')
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Categorization failed: Pipeline error (exit code {proc.returncode}). "
+                               f"Error details: {error_msg[:500]}{'...' if len(error_msg) > 500 else ''}"
+                    )
+                
+                if not proc.stdout or not proc.stdout.strip():
+                    session.log_error("Pipeline produced no output", 'categorization')
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Categorization failed: Pipeline produced no output. The AI model may have failed to process the transcript."
+                    )
+                
+                output_text = proc.stdout
+                
+            except subprocess.TimeoutExpired:
+                session.log_error("Pipeline timeout", 'categorization')
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Categorization failed: Pipeline timed out after 60 seconds. "
+                           "The transcript may be too long or the AI model is not responding."
+                )
+            except Exception as e:
+                session.log_error(f"Pipeline execution error: {e}", 'categorization')
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Categorization failed: Could not start pipeline process. Error: {e}"
+                )
+            
+            session.update_status('finalizing', 'Processing results and saving final artifacts')
+            
+            # Parse and save categorization results
+            try:
+                categorization_result = json.loads(output_text)
+                session.save_artifact('categorization', categorization_result, 'json')
+                
+                # Also save raw LLM output for debugging
+                session.save_intermediate('llm', 'raw_response', output_text, 'text')
+                
+            except json.JSONDecodeError as e:
+                session.log_error(f"Invalid JSON from pipeline: {e}", 'parsing')
+                # Save as text if JSON parsing fails
+                session.save_artifact('categorization_raw', output_text, 'text')
+                categorization_result = output_text
+            
+            session.update_status('completed', 'Audio processing completed successfully')
+            
+            # Prepare response with session information
+            response_data = {
+                "result": categorization_result,
+                "metadata": {
+                    "session_id": session.session_id,
+                    "timestamp": session.get_metadata()['created'],
+                    "audio_file": audio_filename,
+                    "transcript": transcript,
+                    "artifacts": session.list_artifacts(),
+                    "processing_steps": len(session.get_metadata().get('processing_steps', [])),
+                    "session_summary": session.get_summary()
+                }
+            }
+            
+            # Also maintain backwards compatibility with old format
+            old_format_metadata = {
+                "timestamp": session.session_id.split('_')[0] + '_' + session.session_id.split('_')[1],
+                "audio_file": f"{session.session_id}_{audio_filename}",
+                "transcript": transcript,
+                "processing_result": output_text if isinstance(categorization_result, str) else json.dumps(categorization_result)
+            }
+            
+            # Save old format metadata for backwards compatibility
+            old_metadata_path = RECORDINGS_DIR / f"{old_format_metadata['timestamp']}_metadata.json"
+            try:
+                old_metadata_path.write_text(json.dumps(old_format_metadata, indent=2))
+            except Exception as e:
+                print(f"Warning: Could not save backwards compatibility metadata: {e}")
+            
+            return JSONResponse(response_data)
+            
+        except HTTPException:
+            # Re-raise HTTP exceptions (these have proper error messages)
+            raise
+        except Exception as e:
+            # Log unexpected errors and convert to HTTP exception
+            session.log_error(f"Unexpected error: {e}", 'unknown')
+            raise HTTPException(
+                status_code=500,
+                detail=f"Audio processing failed: An unexpected error occurred. Session ID: {session.session_id}. Error: {e}"
+            )
