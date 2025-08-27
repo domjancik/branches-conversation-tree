@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrated Conversation Analysis</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .demo-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .demo-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .integration-panel {
+            padding: 30px;
+        }
+        
+        .controls-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .demo-button {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-button:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .demo-button.primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .demo-button.primary:hover {
+            background: #5a67d8;
+        }
+        
+        .status-indicator {
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .status-indicator.disconnected {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .status-indicator.connected {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .session-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .session-select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            min-width: 150px;
+        }
+        
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            min-height: 600px;
+        }
+        
+        .visualization-panel {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .panel-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .panel-content {
+            height: 500px;
+            overflow: auto;
+        }
+        
+        .info-panel {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        
+        .info-panel h3 {
+            margin: 0 0 15px 0;
+            color: #1976d2;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4caf50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .sync-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .sync-indicator.show {
+            opacity: 1;
+        }
+        
+        .debug-panel {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .debug-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        @media (max-width: 1024px) {
+            .visualization-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .controls-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1 class="demo-title">Integrated Conversation Analysis</h1>
+            <p class="demo-subtitle">Synchronized visualization of transcript segments and conversation structure</p>
+        </div>
+        
+        <div class="integration-panel">
+            <div class="controls-section">
+                <div class="control-group">
+                    <button class="demo-button primary" onclick="initializeIntegration()">Initialize</button>
+                    <button class="demo-button" onclick="loadSampleData()">Load Sample</button>
+                    <button class="demo-button" onclick="clearVisualization()">Clear</button>
+                </div>
+                
+                <div class="control-group">
+                    <span class="status-indicator disconnected" id="status">Disconnected</span>
+                </div>
+                
+                <div class="session-selector">
+                    <label for="session-select">Session:</label>
+                    <select class="session-select" id="session-select" onchange="loadSelectedSession()">
+                        <option value="">Select a session...</option>
+                    </select>
+                    <button class="demo-button" onclick="refreshSessions()">Refresh</button>
+                </div>
+            </div>
+            
+            <div class="visualization-grid">
+                <div class="visualization-panel">
+                    <div class="panel-header">Transcript Visualization</div>
+                    <div class="panel-content" id="transcript-container">
+                        <div style="padding: 40px; text-align: center; color: #666;">
+                            Click "Initialize" to set up the integrated visualization
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="visualization-panel">
+                    <div class="panel-header">Conversation Tree</div>
+                    <div class="panel-content" id="tree-container">
+                        <div style="padding: 40px; text-align: center; color: #666;">
+                            Conversation structure will appear here
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h3>Integration Features</h3>
+                <p>This demo shows the synchronized visualization of transcript segments and conversation structure. 
+                When you interact with elements in one view, related elements in the other view are automatically highlighted.</p>
+                
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span>Bi-directional selection synchronization</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span>Connection highlighting across views</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span>Real-time session data loading</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span>Interactive segment exploration</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span>Coordinated hover effects</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span>State management and event system</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="debug-panel" id="debug-panel" style="display: none;">
+                <h4>Debug Information</h4>
+                <div class="debug-content" id="debug-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="sync-indicator" id="sync-indicator">
+        Synchronizing views...
+    </div>
+
+    <script src="transcript-visualizer.js"></script>
+    <script src="conversation-tree-integration.js"></script>
+    <script>
+        let conversationIntegration = null;
+        let debugMode = false;
+        
+        function initializeIntegration() {
+            try {
+                // Initialize the integration bridge
+                conversationIntegration = new ConversationTreeIntegration({
+                    pipelineEndpoint: 'http://localhost:8000',
+                    enableRealTimeSync: true,
+                    autoLayout: true
+                });
+                
+                // Make it globally available for button callbacks
+                window.conversationIntegration = conversationIntegration;
+                
+                // Initialize both visualizations
+                const transcriptContainer = document.getElementById('transcript-container');
+                const treeContainer = document.getElementById('tree-container');
+                
+                conversationIntegration.initializeTranscriptVisualizer(transcriptContainer);
+                conversationIntegration.initializeConversationTree(treeContainer);
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Update status
+                updateStatus('connected', 'Connected');
+                
+                // Load available sessions
+                refreshSessions();
+                
+                showSyncIndicator('Integration initialized successfully');
+                
+            } catch (error) {
+                console.error('Failed to initialize integration:', error);
+                alert('Failed to initialize integration: ' + error.message);
+            }
+        }
+        
+        function setupEventListeners() {
+            if (!conversationIntegration) return;
+            
+            // Listen for integration events
+            conversationIntegration.events.on('segment_selected', (data) => {
+                logDebug(`Segment selected: ${data.segmentId} from ${data.source}`);
+                showSyncIndicator(`Selected: ${data.segmentId}`);
+            });
+            
+            conversationIntegration.events.on('segment_hovered', (data) => {
+                logDebug(`Segment hovered: ${data.segmentId} from ${data.source}`);
+            });
+            
+            conversationIntegration.events.on('connection_highlighted', (data) => {
+                logDebug(`Connection highlighted: ${data.fromId} -> ${data.toId}`);
+                showSyncIndicator(`Connection: ${data.fromId} ↔ ${data.toId}`);
+            });
+            
+            conversationIntegration.events.on('state_updated', (state) => {
+                logDebug('State updated', state);
+            });
+            
+            conversationIntegration.events.on('integration_ready', (data) => {
+                logDebug('Integration ready', data);
+                showSyncIndicator('Both visualizations synchronized');
+            });
+        }
+        
+        async function refreshSessions() {
+            if (!conversationIntegration) {
+                alert('Please initialize the integration first');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/sessions');
+                const data = await response.json();
+                
+                const select = document.getElementById('session-select');
+                select.innerHTML = '<option value="">Select a session...</option>';
+                
+                if (data.sessions && data.sessions.length > 0) {
+                    data.sessions.forEach(session => {
+                        const option = document.createElement('option');
+                        option.value = session.session_id;
+                        option.textContent = `${session.session_id} (${session.status})`;
+                        select.appendChild(option);
+                    });
+                    
+                    logDebug(`Loaded ${data.sessions.length} sessions`);
+                } else {
+                    logDebug('No sessions found');
+                }
+            } catch (error) {
+                console.error('Failed to load sessions:', error);
+                logDebug('Failed to connect to server. Make sure the pipeline server is running on localhost:8000');
+            }
+        }
+        
+        async function loadSelectedSession() {
+            const sessionId = document.getElementById('session-select').value;
+            if (!sessionId) return;
+            
+            if (!conversationIntegration) {
+                alert('Please initialize the integration first');
+                return;
+            }
+            
+            try {
+                showSyncIndicator(`Loading session: ${sessionId}`);
+                await conversationIntegration.loadPipelineData(sessionId);
+                logDebug(`Successfully loaded session: ${sessionId}`);
+            } catch (error) {
+                console.error('Failed to load session:', error);
+                alert('Failed to load session: ' + error.message);
+            }
+        }
+        
+        function loadSampleData() {
+            if (!conversationIntegration) {
+                alert('Please initialize the integration first');
+                return;
+            }
+            
+            const sampleData = {
+                metadata: {
+                    transcript: "I've been thinking about artificial intelligence and its impact on society. There are both exciting opportunities and serious concerns we need to address. For example, AI could revolutionize healthcare by helping doctors diagnose diseases more accurately. But we also need to worry about job displacement and privacy issues. The key is finding the right balance between innovation and responsibility."
+                },
+                result: {
+                    segments: [
+                        {
+                            id: "ai_opportunities",
+                            category: "Technology Benefits",
+                            summary: "Discussion of positive AI applications in healthcare and diagnosis",
+                            confidence: 0.85,
+                            connections: ["ai_concerns", "balance_consideration"],
+                            text_ranges: [
+                                {
+                                    start_char: 67,
+                                    end_char: 97,
+                                    excerpt: "exciting opportunities",
+                                    relevance: 0.9
+                                },
+                                {
+                                    start_char: 142,
+                                    end_char: 221,
+                                    excerpt: "AI could revolutionize healthcare by helping doctors diagnose diseases",
+                                    relevance: 0.95
+                                }
+                            ]
+                        },
+                        {
+                            id: "ai_concerns",
+                            category: "Technology Risks",
+                            summary: "Concerns about AI impact including job displacement and privacy",
+                            confidence: 0.78,
+                            connections: ["ai_opportunities", "balance_consideration"],
+                            text_ranges: [
+                                {
+                                    start_char: 98,
+                                    end_char: 140,
+                                    excerpt: "serious concerns we need to address",
+                                    relevance: 0.88
+                                },
+                                {
+                                    start_char: 272,
+                                    end_char: 306,
+                                    excerpt: "job displacement and privacy issues",
+                                    relevance: 0.92
+                                }
+                            ]
+                        },
+                        {
+                            id: "balance_consideration",
+                            category: "Policy Framework",
+                            summary: "Need for balance between innovation and responsibility",
+                            confidence: 0.82,
+                            connections: ["ai_opportunities", "ai_concerns"],
+                            text_ranges: [
+                                {
+                                    start_char: 308,
+                                    end_char: 380,
+                                    excerpt: "The key is finding the right balance between innovation and responsibility",
+                                    relevance: 0.90
+                                }
+                            ]
+                        }
+                    ],
+                    connections_summary: [
+                        {
+                            from: "ai_opportunities",
+                            to: "ai_concerns",
+                            type: "contrast",
+                            reason: "Discusses both positive and negative aspects of AI",
+                            confidence: 0.9
+                        },
+                        {
+                            from: "ai_concerns",
+                            to: "balance_consideration",
+                            type: "leads_to",
+                            reason: "Concerns lead to discussion of needed balance",
+                            confidence: 0.85
+                        },
+                        {
+                            from: "ai_opportunities",
+                            to: "balance_consideration",
+                            type: "requires",
+                            reason: "Opportunities must be balanced with responsibilities",
+                            confidence: 0.80
+                        }
+                    ],
+                    open_topics: [
+                        {
+                            topic: "Specific Regulations",
+                            question: "What specific policies should govern AI development?",
+                            related_segments: ["ai_concerns", "balance_consideration"],
+                            status: "Unanswered"
+                        },
+                        {
+                            topic: "Healthcare Implementation",
+                            question: "How should AI be integrated into healthcare systems?",
+                            related_segments: ["ai_opportunities"],
+                            status: "Partial"
+                        }
+                    ]
+                }
+            };
+            
+            conversationIntegration.events.emit('pipeline_data_loaded', sampleData);
+            logDebug('Sample data loaded');
+            showSyncIndicator('Sample data loaded successfully');
+        }
+        
+        function clearVisualization() {
+            const transcriptContainer = document.getElementById('transcript-container');
+            const treeContainer = document.getElementById('tree-container');
+            
+            transcriptContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">Visualization cleared</div>';
+            treeContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">Tree cleared</div>';
+            
+            document.getElementById('session-select').value = '';
+            
+            logDebug('Visualization cleared');
+        }
+        
+        function updateStatus(type, text) {
+            const indicator = document.getElementById('status');
+            indicator.className = `status-indicator ${type}`;
+            indicator.textContent = text;
+        }
+        
+        function showSyncIndicator(message) {
+            const indicator = document.getElementById('sync-indicator');
+            indicator.textContent = message;
+            indicator.classList.add('show');
+            
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+        
+        function logDebug(message, data = null) {
+            if (debugMode) {
+                const debugContent = document.getElementById('debug-content');
+                const timestamp = new Date().toLocaleTimeString();
+                let logEntry = `[${timestamp}] ${message}`;
+                
+                if (data) {
+                    logEntry += '\\n' + JSON.stringify(data, null, 2);
+                }
+                
+                debugContent.textContent += logEntry + '\\n\\n';
+                debugContent.scrollTop = debugContent.scrollHeight;
+            }
+            
+            console.log(message, data);
+        }
+        
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugPanel = document.getElementById('debug-panel');
+            debugPanel.style.display = debugMode ? 'block' : 'none';
+            
+            if (debugMode) {
+                logDebug('Debug mode enabled');
+            }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                toggleDebug();
+            }
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus('disconnected', 'Disconnected');
+        });
+    </script>
+</body>
+</html>

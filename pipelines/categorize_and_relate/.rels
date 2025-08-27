@@ -15,7 +15,14 @@
 
     {"id": "file_cli_py", "type": "FILE", "name": "cli.py", "path": "cli.py"},
     {"id": "mod_web", "type": "MODULE", "name": "Web UI", "path": "web"},
+    {"id": "file_transcript_visualizer", "type": "FILE", "name": "transcript-visualizer.js", "path": "web/transcript-visualizer.js"},
+    {"id": "class_transcript_visualizer", "type": "CLASS", "name": "TranscriptVisualizer", "path": "web/transcript-visualizer.js#TranscriptVisualizer"},
+    {"id": "file_demo_html", "type": "FILE", "name": "demo.html", "path": "web/demo.html"},
     {"id": "dir_recordings", "type": "MODULE", "name": "Recordings Store", "path": "recordings"},
+    {"id": "file_session_manager", "type": "FILE", "name": "session_manager.py", "path": "session_manager.py"},
+    {"id": "class_session_manager", "type": "CLASS", "name": "SessionManager", "path": "session_manager.py#SessionManager"},
+    {"id": "class_pipeline_session", "type": "CLASS", "name": "PipelineSession", "path": "session_manager.py#PipelineSession"},
+    {"id": "class_session_context", "type": "CLASS", "name": "SessionContext", "path": "session_manager.py#SessionContext"},
 
     {"id": "doc_error_handling", "type": "SPECIFICATION", "name": "ERROR_HANDLING_IMPROVEMENTS.md", "path": "ERROR_HANDLING_IMPROVEMENTS.md"},
     {"id": "doc_storage_orchestration", "type": "SPECIFICATION", "name": "Pipeline_Storage_and_Orchestration.md", "path": "docs/Pipeline_Storage_and_Orchestration.md"}
@@ -33,13 +40,31 @@
     {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "mod_web"},
     {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "dir_recordings"},
 
+    {"type": "CONTAINS", "source": "sys_categorize_relate", "target": "file_session_manager"},
+    {"type": "CONTAINS", "source": "file_session_manager", "target": "class_session_manager"},
+    {"type": "CONTAINS", "source": "file_session_manager", "target": "class_pipeline_session"},
+    {"type": "CONTAINS", "source": "file_session_manager", "target": "class_session_context"},
+    {"type": "CONTAINS", "source": "mod_web", "target": "file_transcript_visualizer"},
+    {"type": "CONTAINS", "source": "file_transcript_visualizer", "target": "class_transcript_visualizer"},
+    {"type": "CONTAINS", "source": "mod_web", "target": "file_demo_html"},
+
     {"type": "USES", "source": "fn_transcribe_with_whisper", "target": "dir_recordings", "metadata": {"purpose": "read/write audio"}},
     {"type": "CALLS", "source": "fn_run_categorize_and_relate", "target": "file_run_py", "metadata": {"via": "subprocess uv run python run.py"}},
     {"type": "CALLS", "source": "fn_call_ollama", "target": "doc_storage_orchestration", "metadata": {"note": "reference for artifactization plan"}},
     {"type": "DEPENDS_ON", "source": "file_run_py", "target": "fn_call_ollama"},
 
+    {"type": "IMPORTS", "source": "file_server_main", "target": "file_session_manager", "metadata": {"purpose": "session-based artifact storage"}},
+    {"type": "USES", "source": "file_server_main", "target": "class_session_manager", "metadata": {"purpose": "manage pipeline sessions"}},
+    {"type": "USES", "source": "file_server_main", "target": "class_session_context", "metadata": {"purpose": "session lifecycle management"}},
+    {"type": "MANAGES", "source": "class_session_manager", "target": "dir_recordings", "metadata": {"purpose": "organize session artifacts"}},
+    {"type": "CREATES", "source": "class_pipeline_session", "target": "dir_recordings", "metadata": {"purpose": "session directories and artifacts"}},
+    {"type": "CONSUMES", "source": "class_transcript_visualizer", "target": "file_server_main", "metadata": {"purpose": "display pipeline results"}},
+    {"type": "VISUALIZES", "source": "class_transcript_visualizer", "target": "dir_recordings", "metadata": {"purpose": "display categorized transcripts"}},
+    {"type": "DEMONSTRATES", "source": "file_demo_html", "target": "class_transcript_visualizer", "metadata": {"purpose": "interactive demo of visualization"}},
+
     {"type": "SUPPORTS", "source": "doc_error_handling", "target": "file_server_main"},
-    {"type": "SUPPORTS", "source": "doc_storage_orchestration", "target": "sys_categorize_relate"}
+    {"type": "SUPPORTS", "source": "doc_storage_orchestration", "target": "sys_categorize_relate"},
+    {"type": "IMPLEMENTS", "source": "file_session_manager", "target": "doc_storage_orchestration", "metadata": {"purpose": "artifact storage strategy"}}
   ],
   "tasks": [
     {
@@ -78,9 +103,25 @@
       "id": "task_artifacts_phase1",
       "name": "Phase 1: Artifactize pipeline outputs",
       "description": "Introduce run_id session dirs and persist all intermediate artifacts as per docs.",
-      "status": "TODO",
-      "progress": 0.0,
-      "relatedComponentIds": ["sys_categorize_relate", "file_server_main", "file_run_py", "dir_recordings", "doc_storage_orchestration"]
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["sys_categorize_relate", "file_server_main", "file_run_py", "dir_recordings", "doc_storage_orchestration", "file_session_manager"]
+    },
+    {
+      "id": "task_transcript_visualization",
+      "name": "Implement transcript visualization with segment highlights",
+      "description": "Create interactive UI component to display categorized transcript segments with precise character-based highlighting.",
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["file_transcript_visualizer", "class_transcript_visualizer", "file_demo_html", "mod_web"]
+    },
+    {
+      "id": "task_session_management",
+      "name": "Implement session-based artifact storage",
+      "description": "Create session manager with unique run IDs for organized storage of all pipeline intermediate artifacts.",
+      "status": "DONE",
+      "progress": 1.0,
+      "relatedComponentIds": ["file_session_manager", "class_session_manager", "class_pipeline_session", "class_session_context"]
     },
     {
       "id": "task_observability_phase2",
