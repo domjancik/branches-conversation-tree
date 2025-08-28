@@ -518,7 +518,19 @@ hr {
     body {
         background: white;
     }
-    
+
+    /* Allow large blocks to split if needed to avoid blank pages */
+    pre, table, .mermaid, .interface-definition {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    /* Relax any avoid-breaks during pagination */
+    .avoid-break {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
     .cover-page {
         margin: 0;
     }

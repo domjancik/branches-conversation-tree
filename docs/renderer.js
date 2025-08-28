@@ -326,7 +326,7 @@ class DocumentRenderer {
 
         const h2Elements = content.querySelectorAll('h2');
         h2Elements.forEach(h2 => {
-            h2.classList.add('keep-with-next');
+            // No keep-with-next to let pagination split as needed
         });
     }
 
