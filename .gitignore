@@ -363,3 +363,4 @@ node_modules/
 *.dmp
 .warp*
 #endregion
+pipelines/categorize_and_relate/recordings/
