@@ -21,6 +21,7 @@ class TranscriptVisualizer {
         this.segments = [];
         this.connections = [];
         this.openTopics = [];
+        this.topicColorMap = new Map();
         
         this.init();
     }
@@ -99,27 +100,19 @@ class TranscriptVisualizer {
             
             .segment-highlight {
                 position: relative;
-                border-radius: 3px;
-                padding: 2px 4px;
+                padding: 0 1px 2px;
                 margin: 0 1px;
                 cursor: pointer;
                 transition: all 0.2s ease;
+                border-bottom-width: 6px;
+                border-bottom-style: solid;
+                border-bottom-color: var(--topic-color, #007acc);
             }
             
             .segment-highlight:hover {
                 box-shadow: 0 2px 8px rgba(0,0,0,0.15);
                 transform: translateY(-1px);
             }
-            
-            /* Color schemes for different categories */
-            .segment-highlight.category-0 { background: rgba(255, 182, 193, 0.4); border-left: 3px solid #ff1744; }
-            .segment-highlight.category-1 { background: rgba(173, 216, 230, 0.4); border-left: 3px solid #2196f3; }
-            .segment-highlight.category-2 { background: rgba(144, 238, 144, 0.4); border-left: 3px solid #4caf50; }
-            .segment-highlight.category-3 { background: rgba(255, 218, 185, 0.4); border-left: 3px solid #ff9800; }
-            .segment-highlight.category-4 { background: rgba(221, 160, 221, 0.4); border-left: 3px solid #9c27b0; }
-            .segment-highlight.category-5 { background: rgba(255, 255, 224, 0.4); border-left: 3px solid #ffc107; }
-            .segment-highlight.category-6 { background: rgba(255, 240, 245, 0.4); border-left: 3px solid #e91e63; }
-            .segment-highlight.category-7 { background: rgba(240, 248, 255, 0.4); border-left: 3px solid #03a9f4; }
             
             .segment-tooltip {
                 position: absolute;
@@ -264,8 +257,42 @@ class TranscriptVisualizer {
         `;
         document.head.appendChild(styles);
     }
-    
-    loadData(pipelineResult) {
+
+    // Generate or reuse a deterministic color for a given topic/category label
+    getColorForTopic(label) {
+        if (!label) return '#007acc';
+        if (this.topicColorMap.has(label)) return this.topicColorMap.get(label);
+        const hue = this.hashString(label) % 360;
+        const saturation = 70; // percent
+        const lightness = 50; // percent
+        const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        this.topicColorMap.set(label, color);
+        return color;
+    }
+
+    buildTopicColorMap() {
+        this.topicColorMap.clear();
+        const seen = new Set();
+        (this.segments || []).forEach(seg => {
+            const label = seg.topic || seg.category;
+            if (label && !seen.has(label)) {
+                seen.add(label);
+                // Precompute and store color for stability
+                this.getColorForTopic(label);
+            }
+        });
+    }
+
+    // Simple string hash -> 32-bit integer
+    hashString(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0; // Convert to 32bit int
+        }
+        return Math.abs(hash);
+    }
+         loadData(pipelineResult) {
         try {
             // Handle both raw pipeline output and server response formats
             const data = pipelineResult.result || pipelineResult;
@@ -276,6 +303,9 @@ class TranscriptVisualizer {
             
             // Get transcript from metadata if available
             this.transcript = pipelineResult.metadata?.transcript || '';
+
+            // Build or update topic -> color mapping
+            this.buildTopicColorMap();
             
             this.render();
         } catch (error) {
@@ -352,14 +382,16 @@ class TranscriptVisualizer {
                 html += this.escapeHtml(this.transcript.slice(currentPos, range.start));
             }
             
-            // Add highlighted range
+            // Add highlighted range with thick colored underline by topic/category
             const text = this.transcript.slice(range.start, range.end);
-            html += `<span class="segment-highlight category-${range.segmentIndex % 8}" 
-                           data-segment-id="${range.segment.id}"
-                           data-segment-index="${range.segmentIndex}"
-                           data-relevance="${range.relevance}">
-                        ${this.escapeHtml(text)}
-                     </span>`;
+            const topicLabel = range.segment.topic || range.segment.category || 'Topic';
+            const color = this.getColorForTopic(topicLabel);
+            html += `<span class=\"segment-highlight\" 
+                           data-segment-id=\"${range.segment.id}\"
+                           data-segment-index=\"${range.segmentIndex}\"
+                           data-topic=\"${this.escapeHtml(topicLabel)}\"
+                           data-relevance=\"${range.relevance}\"
+                           style=\"--topic-color: ${color}; border-bottom-color: ${color};\">\n                        ${this.escapeHtml(text)}\n                     </span>`;
             
             currentPos = Math.max(currentPos, range.end);
         });
@@ -375,19 +407,31 @@ class TranscriptVisualizer {
     renderLegend() {
         if (this.segments.length === 0) return '';
         
-        const legendItems = this.segments.map((segment, index) => `
-            <div class="legend-item" data-segment-id="${segment.id}">
-                <div class="legend-color category-${index % 8}"></div>
+        // Unique topics/categories preserving order of first appearance
+        const seen = new Set();
+        const topics = [];
+        this.segments.forEach(seg => {
+            const label = seg.topic || seg.category || 'Topic';
+            if (!seen.has(label)) {
+                seen.add(label);
+                topics.push(label);
+            }
+        });
+        
+        const legendItems = topics.map((label) => {
+            const color = this.getColorForTopic(label);
+            return `
+            <div class="legend-item" data-topic="${this.escapeHtml(label)}">
+                <div class="legend-color" style="background: ${color}; border-color: ${color};"></div>
                 <div class="legend-label">
-                    <strong>${segment.category}</strong>
-                    <div style="font-size: 0.8em; color: #666;">${segment.summary}</div>
+                    <strong>${label}</strong>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
         
         return `
             <div class="segments-legend">
-                <div class="legend-title">Categories Found (${this.segments.length})</div>
+                <div class="legend-title">Topics (${topics.length})</div>
                 <div class="legend-items">
                     ${legendItems}
                 </div>
@@ -456,11 +500,13 @@ class TranscriptVisualizer {
             });
         });
         
-        // Legend items
+        // Legend items (click to highlight all occurrences of a topic)
         this.container.querySelectorAll('.legend-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                const segmentId = e.currentTarget.dataset.segmentId;
-                this.highlightSegment(segmentId);
+                const topic = e.currentTarget.dataset.topic;
+                if (topic) {
+                    this.highlightTopic(topic);
+                }
             });
         });
     }
@@ -501,13 +547,31 @@ class TranscriptVisualizer {
         });
         
         // Highlight all instances of this segment
-        this.container.querySelectorAll(`[data-segment-id="${segmentId}"]`).forEach(el => {
+        this.container.querySelectorAll(`[data-segment-id=\"${segmentId}\"]`).forEach(el => {
             el.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
             el.style.transform = 'translateY(-2px)';
             
             // Scroll into view
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
+    }
+
+    highlightTopic(topicLabel) {
+        // Remove previous highlights
+        this.container.querySelectorAll('.segment-highlight').forEach(el => {
+            el.style.boxShadow = '';
+            el.style.transform = '';
+        });
+        
+        // Highlight all ranges with this topic
+        const matches = this.container.querySelectorAll(`[data-topic=\"${this.escapeHtml(topicLabel)}\"]`);
+        matches.forEach(el => {
+            el.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
+            el.style.transform = 'translateY(-2px)';
+        });
+        if (matches.length) {
+            matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
     
     showError(message) {
