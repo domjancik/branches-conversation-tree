@@ -104,9 +104,10 @@ class TranscriptVisualizer {
                 margin: 0;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                background: linear-gradient(to bottom, transparent 0%, transparent 60%, var(--topic-color, #007acc) 60%, var(--topic-color, #007acc) 100%);
-                background-size: 100% 100%;
+                background: var(--topic-color, hsla(200, 60%, 85%, 0.6));
                 border-radius: 2px;
+                box-decoration-break: clone;
+                -webkit-box-decoration-break: clone;
             }
             
             .segment-highlight:hover {
@@ -258,14 +259,18 @@ class TranscriptVisualizer {
         document.head.appendChild(styles);
     }
 
-    // Generate or reuse a deterministic color for a given topic/category label
+    // Generate or reuse a deterministic pastel color for a given topic/category label
     getColorForTopic(label) {
-        if (!label) return '#007acc';
+        if (!label) return 'hsla(200, 60%, 85%, 0.6)'; // Default light blue pastel
         if (this.topicColorMap.has(label)) return this.topicColorMap.get(label);
+        
         const hue = this.hashString(label) % 360;
-        const saturation = 70; // percent
-        const lightness = 50; // percent
-        const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        // Pastel colors: lower saturation (40-60%) and higher lightness (75-85%)
+        const saturation = 40 + (this.hashString(label + 'sat') % 20); // 40-60%
+        const lightness = 75 + (this.hashString(label + 'light') % 10); // 75-85%
+        
+        // Use HSLA with transparency for better text readability
+        const color = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.7)`;
         this.topicColorMap.set(label, color);
         return color;
     }
@@ -415,9 +420,11 @@ class TranscriptVisualizer {
         
         const legendItems = topics.map((label) => {
             const color = this.getColorForTopic(label);
+            // For legend, use solid version of the color
+            const solidColor = color.replace('hsla(', 'hsl(').replace(', 0.7)', ')');
             return `
             <div class="legend-item" data-topic="${this.escapeHtml(label)}">
-                <div class="legend-color" style="background: ${color}; border-color: ${color};"></div>
+                <div class="legend-color" style="background: ${solidColor}; border: 1px solid rgba(0,0,0,0.1);"></div>
                 <div class="legend-label">
                     <strong>${label}</strong>
                 </div>
