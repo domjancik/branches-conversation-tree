@@ -100,13 +100,13 @@ class TranscriptVisualizer {
             
             .segment-highlight {
                 position: relative;
-                padding: 0 1px 2px;
-                margin: 0 1px;
+                padding: 1px 2px;
+                margin: 0;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                border-bottom-width: 6px;
-                border-bottom-style: solid;
-                border-bottom-color: var(--topic-color, #007acc);
+                background: linear-gradient(to bottom, transparent 0%, transparent 60%, var(--topic-color, #007acc) 60%, var(--topic-color, #007acc) 100%);
+                background-size: 100% 100%;
+                border-radius: 2px;
             }
             
             .segment-highlight:hover {
@@ -386,12 +386,7 @@ class TranscriptVisualizer {
             const text = this.transcript.slice(range.start, range.end);
             const topicLabel = range.segment.topic || range.segment.category || 'Topic';
             const color = this.getColorForTopic(topicLabel);
-            html += `<span class=\"segment-highlight\" 
-                           data-segment-id=\"${range.segment.id}\"
-                           data-segment-index=\"${range.segmentIndex}\"
-                           data-topic=\"${this.escapeHtml(topicLabel)}\"
-                           data-relevance=\"${range.relevance}\"
-                           style=\"--topic-color: ${color}; border-bottom-color: ${color};\">\n                        ${this.escapeHtml(text)}\n                     </span>`;
+            html += `<span class="segment-highlight" data-segment-id="${range.segment.id}" data-segment-index="${range.segmentIndex}" data-topic="${this.escapeHtml(topicLabel)}" data-relevance="${range.relevance}" style="--topic-color: ${color};">${this.escapeHtml(text)}</span>`;
             
             currentPos = Math.max(currentPos, range.end);
         });
