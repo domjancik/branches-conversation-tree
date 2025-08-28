@@ -13,8 +13,11 @@ Setup
    .venv/Scripts/activate  # Windows PowerShell
    pip install -r requirements.txt
 
-2. Run server:
-   uvicorn server.main:app --reload --port 8000
+2. Run server (from inside the `server` directory):
+   uvicorn main:app --reload --port 8000
+
+Alternative (using uv):
+   uv run -m uvicorn main:app --reload --port 8000
 
 Environment
 - FAST_WHISPER_MODEL: set to base|small|medium for accuracy/speed tradeoff (default: small)

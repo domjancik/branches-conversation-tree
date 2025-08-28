@@ -77,3 +77,22 @@ Notes
 - Both scripts return non-zero exit codes and print error output if `ollama generate` fails.
 - Stdout contains the model response unless `-OutputPath/--output` is provided.
 
+## Run the UI (Audio -> Whisper -> Categorize & Relate)
+
+The UI is a static page in `web/` that records microphone audio and POSTs it to the FastAPI server in `server/`.
+
+1. Start the API (from inside `pipelines/categorize_and_relate/server`):
+   - With uv:
+     `uv run -m uvicorn main:app --reload --port 8000`
+   - Or with venv:
+     `python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt && uvicorn main:app --reload --port 8000`
+
+   Optional env vars:
+   - `FAST_WHISPER_MODEL` = tiny|base|small|medium (default: small)
+   - `WHISPER_DEVICE` = cpu|cuda (default: cpu)
+
+2. Serve the UI:
+   `cd web && python -m http.server 3001` then open http://localhost:3001
+
+3. Use the UI:
+   Click "Start Recording" then "Stop" to send audio to `http://localhost:8000/process-audio` and display JSON results.
