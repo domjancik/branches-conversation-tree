@@ -13284,7 +13284,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="CuhZjoMeNAAL0dg4EcXTlj" Comment="Root Recording Id Override" Bounds="617,-1359,35,15" ShowValueBox="true" isIOBox="true" Value="513">
+          <Pad Id="CuhZjoMeNAAL0dg4EcXTlj" Comment="Root Recording Id Override" Bounds="617,-1359,35,15" ShowValueBox="true" isIOBox="true" Value="1164">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
