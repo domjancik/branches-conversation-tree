@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Timeline WebUI — Media Existence Visualization</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <div class="controls">
+        <button id="pickDir">Pick Directory</button>
+        <label title="Include files from subdirectories">
+          <input type="checkbox" id="recursive" checked />
+          Recursive
+        </label>
+        <label title="Limit number of files processed">
+          Limit
+          <input type="number" id="limit" min="1" max="10000" value="500" />
+        </label>
+        <label title="Fixed pixel width for image bars">
+          Image width
+          <input type="number" id="imgWidth" min="2" max="200" value="16" /> px
+        </label>
+        <label title="Max rows rendered (virtualized rendering may come later)">
+          Rows
+          <input type="number" id="rows" min="10" max="3000" value="300" />
+        </label>
+        <span class="spacer"></span>
+        <label title="Zoom in/out the time scale">
+          Zoom
+          <input type="range" id="zoom" min="-6" max="6" step="0.1" value="0" />
+        </label>
+      </div>
+      <div id="info" class="info"></div>
+    </header>
+
+    <main>
+      <canvas id="timeline" aria-label="Timeline canvas" role="img"></canvas>
+    </main>
+
+    <footer>
+      <small>
+        Tip: Use the top control strip (first row) to pan (drag) and zoom (mouse wheel). Ctrl/Cmd + wheel also zooms anywhere.
+        This app uses the File System Access API, which requires running from http(s) (localhost is fine). Use the provided start_ui.ps1.
+      </small>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
+

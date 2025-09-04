@@ -1,0 +1,73 @@
+/* Basic layout */
+:root {
+  color-scheme: dark light;
+  --bg: #0f1115;
+  --fg: #e6e6e6;
+  --muted: #9aa0a6;
+  --accent: #4f8cff;
+  --bar-img: #8ab4f8;
+  --bar-audio: #34d399;
+  --bar-video: #f59e0b;
+  --bar-unknown: #f87171;
+  --control-bg: #151821;
+  --grid: #2a2e39;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--control-bg);
+  border-bottom: 1px solid var(--grid);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.controls input[type="number"] {
+  width: 6rem;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.info {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+main {
+  position: relative;
+}
+
+#timeline {
+  width: 100%;
+  height: calc(100vh - 140px);
+  display: block;
+  background: #0d0f14;
+}
+
+footer {
+  padding: 8px 12px;
+  color: var(--muted);
+  border-top: 1px solid var(--grid);
+}
+
