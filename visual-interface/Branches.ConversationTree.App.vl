@@ -2,7 +2,7 @@
 <Document xmlns:p="property" xmlns:r="reflection" Id="JY9588IOXcXLrDjmyAtCMI" LanguageVersion="2025.7.0" Version="0.128">
   <NugetDependency Id="DXsuzjbI5W6MdMSvJUNFd2" Location="VL.CoreLib" Version="2025.7.0" />
   <Patch Id="NQZO9pdAeDsQSVK5YE1nhv">
-    <Canvas Id="Rr7bPLLGqueK9rwZs6iWz0" DefaultCategory="Main" CanvasType="FullCategory">
+    <Canvas Id="Rr7bPLLGqueK9rwZs6iWz0" DefaultCategory="Branches.ConversationTree.App" CanvasType="FullCategory">
       <!--
 
     ************************ SpiralLines ************************
