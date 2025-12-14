@@ -12,6 +12,10 @@ from data_api_models import (
     ImageGenerationCreate,
     ImageGenerationUpdate,
     BatchImageGenerationCreate,
+    ProgressUpdate,
+    ProcessingStatusResponse,
+    TranscriptionStatus,
+    ImageGenerationStatus,
 )
 from typing import Optional
 
@@ -138,6 +142,7 @@ async def create_image_generation(
                 "seed": db_image_generation.seed,
                 "request_payload": db_image_generation.request_payload,
                 "status": db_image_generation.status,
+                "progress": 100.0 if db_image_generation.status == "completed" else (50.0 if db_image_generation.status == "generating" else 0.0),
                 "created_date": db_image_generation.created_date.isoformat(),
                 "updated_date": db_image_generation.updated_date.isoformat(),
             }
@@ -182,6 +187,7 @@ async def update_image_generation(
                 "seed": image_generation.seed,
                 "request_payload": image_generation.request_payload,
                 "status": image_generation.status,
+                "progress": 100.0 if image_generation.status == "completed" else (50.0 if image_generation.status == "generating" else 0.0),
                 "created_date": image_generation.created_date.isoformat(),
                 "updated_date": image_generation.updated_date.isoformat(),
             }
@@ -288,4 +294,127 @@ async def create_image_generations_batch(recording_id: int, batch: BatchImageGen
             return created_generations
     except Exception as e:
         logger.error(f"Error creating batch image generations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/recordings/{recording_id}/processing-status", response_model=ProcessingStatusResponse)
+async def get_processing_status(recording_id: int):
+    """Get current processing status for a recording (transcription and image generation)"""
+    try:
+        recording = AudioRecording.get_by_id(recording_id)
+        
+        # Get transcription status
+        transcription_status = TranscriptionStatus(
+            status="completed" if recording.transcription else "pending",
+            text=recording.transcription,
+            updated_date=recording.updated_date.isoformat() if recording.transcription else None
+        )
+        
+        # Get all image generations for this recording
+        image_generations = list(RecordingImageGeneration.select().where(
+            RecordingImageGeneration.audio_recording_id == recording_id
+        ).order_by(RecordingImageGeneration.created_date))
+        
+        # Calculate image generation statistics
+        total = len(image_generations)
+        pending = sum(1 for gen in image_generations if gen.status == "pending")
+        generating = sum(1 for gen in image_generations if gen.status == "generating")
+        completed = sum(1 for gen in image_generations if gen.status == "completed")
+        failed = sum(1 for gen in image_generations if gen.status == "failed")
+        
+        # Calculate overall progress (percentage of completed images)
+        progress = (completed / total * 100.0) if total > 0 else 0.0
+        
+        # Build generations list
+        generations_list = []
+        for gen in image_generations:
+            # Compute progress from status: 0% pending, 50% generating, 100% completed, 0% failed
+            if gen.status == "completed":
+                computed_progress = 100.0
+            elif gen.status == "generating":
+                computed_progress = 50.0  # Indeterminate progress
+            elif gen.status == "failed":
+                computed_progress = 0.0
+            else:  # pending
+                computed_progress = 0.0
+            
+            gen_dict = {
+                "id": gen.id,
+                "prompt": gen.prompt,
+                "status": gen.status,
+                "progress": computed_progress,
+                "image_file_path": gen.image_file_path,
+                "duration": gen.duration,
+                "seed": gen.seed,
+                "created_date": gen.created_date.isoformat(),
+                "updated_date": gen.updated_date.isoformat(),
+            }
+            generations_list.append(gen_dict)
+        
+        image_generation_status = ImageGenerationStatus(
+            total=total,
+            pending=pending,
+            generating=generating,
+            completed=completed,
+            failed=failed,
+            progress=progress,
+            generations=generations_list
+        )
+        
+        # Determine overall status
+        if recording.transcription is None:
+            overall_status = "transcribing"
+        elif recording.prompts is None:
+            overall_status = "generating_prompts"
+        elif total == 0:
+            overall_status = "generating_prompts"
+        elif generating > 0 or pending > 0:
+            overall_status = "generating_images"
+        elif failed > 0 and completed == 0:
+            overall_status = "failed"
+        elif completed == total and total > 0:
+            overall_status = "completed"
+        else:
+            overall_status = "pending"
+        
+        return ProcessingStatusResponse(
+            recording_id=recording_id,
+            transcription=transcription_status,
+            image_generation=image_generation_status,
+            overall_status=overall_status,
+            created_date=recording.created_date.isoformat(),
+            updated_date=recording.updated_date.isoformat()
+        )
+    except AudioRecording.DoesNotExist:
+        raise HTTPException(status_code=404, detail=f"Recording {recording_id} not found")
+    except Exception as e:
+        logger.error(f"Error getting processing status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/image-generations/{generation_id}/progress")
+async def update_generation_progress(generation_id: int, progress_data: ProgressUpdate):
+    """Webhook endpoint for streamdiffusion API to report progress (updates status based on progress)"""
+    try:
+        image_generation = RecordingImageGeneration.get_by_id(generation_id)
+        
+        with db.atomic():
+            # Update status based on progress: if progress is 100%, mark as completed
+            # Otherwise, ensure status is "generating" if not already completed/failed
+            if progress_data.progress >= 100.0:
+                image_generation.status = "completed"
+            elif progress_data.status and image_generation.status not in ["completed", "failed"]:
+                image_generation.status = progress_data.status
+            image_generation.save()
+        
+        return {
+            "message": "Progress updated successfully",
+            "generation_id": generation_id,
+            "progress": progress_data.progress,
+            "status": image_generation.status
+        }
+    except RecordingImageGeneration.DoesNotExist:
+        raise HTTPException(status_code=404, detail=f"Image generation {generation_id} not found")
+    except Exception as e:
+        logger.error(f"Error updating generation progress: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

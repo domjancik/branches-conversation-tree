@@ -38,6 +38,93 @@ public class AudioRecordingResponse
     public float? ParentTime { get; set; }
 }
 
+public class TranscriptionStatus
+{
+    [JsonPropertyName("status")]
+    public string Status { get; set; }
+    
+    [JsonPropertyName("text")]
+    public string Text { get; set; }
+    
+    [JsonPropertyName("updated_date")]
+    public string UpdatedDate { get; set; }
+}
+
+public class ImageGenerationItem
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("prompt")]
+    public string Prompt { get; set; }
+    
+    [JsonPropertyName("status")]
+    public string Status { get; set; }
+    
+    [JsonPropertyName("progress")]
+    public float? Progress { get; set; }
+    
+    [JsonPropertyName("image_file_path")]
+    public string ImageFilePath { get; set; }
+    
+    [JsonPropertyName("duration")]
+    public float? Duration { get; set; }
+    
+    [JsonPropertyName("seed")]
+    public int? Seed { get; set; }
+    
+    [JsonPropertyName("created_date")]
+    public string CreatedDate { get; set; }
+    
+    [JsonPropertyName("updated_date")]
+    public string UpdatedDate { get; set; }
+}
+
+public class ImageGenerationStatus
+{
+    [JsonPropertyName("total")]
+    public int Total { get; set; }
+    
+    [JsonPropertyName("pending")]
+    public int Pending { get; set; }
+    
+    [JsonPropertyName("generating")]
+    public int Generating { get; set; }
+    
+    [JsonPropertyName("completed")]
+    public int Completed { get; set; }
+    
+    [JsonPropertyName("failed")]
+    public int Failed { get; set; }
+    
+    [JsonPropertyName("progress")]
+    public float Progress { get; set; }
+    
+    [JsonPropertyName("generations")]
+    public List<ImageGenerationItem> Generations { get; set; }
+}
+
+public class ProcessingStatusResponse
+{
+    [JsonPropertyName("recording_id")]
+    public int RecordingId { get; set; }
+    
+    [JsonPropertyName("transcription")]
+    public TranscriptionStatus Transcription { get; set; }
+    
+    [JsonPropertyName("image_generation")]
+    public ImageGenerationStatus ImageGeneration { get; set; }
+    
+    [JsonPropertyName("overall_status")]
+    public string OverallStatus { get; set; }
+    
+    [JsonPropertyName("created_date")]
+    public string CreatedDate { get; set; }
+    
+    [JsonPropertyName("updated_date")]
+    public string UpdatedDate { get; set; }
+}
+
 public static class ConversationTreeDataAccess
 {
     private static readonly HttpClient httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:8000") };
@@ -68,5 +155,14 @@ public static class ConversationTreeDataAccess
 
         var responseJson = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<List<AudioRecordingResponse>>(responseJson);
+    }
+
+    public static async Task<ProcessingStatusResponse> GetProcessingStatus(int recordingId)
+    {
+        var response = await httpClient.GetAsync($"/recordings/{recordingId}/processing-status");
+        response.EnsureSuccessStatusCode();
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<ProcessingStatusResponse>(responseJson);
     }
 }

@@ -83,3 +83,42 @@ class BatchImageGenerationCreate(BaseModel):
         if not v:
             raise ValueError("generations list cannot be empty")
         return v
+
+
+class ProgressUpdate(BaseModel):
+    progress: float  # 0.0 to 100.0
+    step: Optional[int] = None
+    total_steps: Optional[int] = None
+    status: str = "generating"
+
+    @field_validator("progress")
+    @classmethod
+    def validate_progress(cls, v):
+        if v < 0.0 or v > 100.0:
+            raise ValueError("progress must be between 0.0 and 100.0")
+        return v
+
+
+class TranscriptionStatus(BaseModel):
+    status: Optional[str] = None  # "pending" | "completed" | null
+    text: Optional[str] = None
+    updated_date: Optional[str] = None
+
+
+class ImageGenerationStatus(BaseModel):
+    total: int
+    pending: int
+    generating: int
+    completed: int
+    failed: int
+    progress: float  # percentage of completed images (0-100)
+    generations: List[Dict]
+
+
+class ProcessingStatusResponse(BaseModel):
+    recording_id: int
+    transcription: TranscriptionStatus
+    image_generation: ImageGenerationStatus
+    overall_status: str  # "pending" | "transcribing" | "generating_prompts" | "generating_images" | "completed" | "failed"
+    created_date: str
+    updated_date: str
