@@ -125,6 +125,66 @@ public class ProcessingStatusResponse
     public string UpdatedDate { get; set; }
 }
 
+public class QueueInfo
+{
+    [JsonPropertyName("size")]
+    public int Size { get; set; }
+    
+    [JsonPropertyName("max_size")]
+    public int MaxSize { get; set; }
+    
+    [JsonPropertyName("is_active")]
+    public bool IsActive { get; set; }
+}
+
+public class ThreadStatus
+{
+    [JsonPropertyName("recording_thread_alive")]
+    public bool RecordingThreadAlive { get; set; }
+    
+    [JsonPropertyName("image_thread_alive")]
+    public bool ImageThreadAlive { get; set; }
+}
+
+public class ProcessingMetrics
+{
+    [JsonPropertyName("total_processed")]
+    public int TotalProcessed { get; set; }
+    
+    [JsonPropertyName("avg_time_seconds")]
+    public double AvgTimeSeconds { get; set; }
+}
+
+public class QueueStatusSummary
+{
+    [JsonPropertyName("total_queued")]
+    public int TotalQueued { get; set; }
+    
+    [JsonPropertyName("has_active_work")]
+    public bool HasActiveWork { get; set; }
+}
+
+public class QueueStatusResponse
+{
+    [JsonPropertyName("service_status")]
+    public string ServiceStatus { get; set; }
+    
+    [JsonPropertyName("is_active")]
+    public bool IsActive { get; set; }
+    
+    [JsonPropertyName("queues")]
+    public Dictionary<string, QueueInfo> Queues { get; set; }
+    
+    [JsonPropertyName("threads")]
+    public ThreadStatus Threads { get; set; }
+    
+    [JsonPropertyName("metrics")]
+    public Dictionary<string, ProcessingMetrics> Metrics { get; set; }
+    
+    [JsonPropertyName("summary")]
+    public QueueStatusSummary Summary { get; set; }
+}
+
 public static class ConversationTreeDataAccess
 {
     private static readonly HttpClient httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:8000") };
@@ -164,5 +224,14 @@ public static class ConversationTreeDataAccess
 
         var responseJson = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<ProcessingStatusResponse>(responseJson);
+    }
+
+    public static async Task<QueueStatusResponse> GetProcessingQueueStatus()
+    {
+        var response = await httpClient.GetAsync("/processing/queue-status");
+        response.EnsureSuccessStatusCode();
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<QueueStatusResponse>(responseJson);
     }
 }

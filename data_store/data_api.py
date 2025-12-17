@@ -16,6 +16,7 @@ from data_api_models import (
     ProcessingStatusResponse,
     TranscriptionStatus,
     ImageGenerationStatus,
+    QueueStatusResponse,
 )
 from typing import Optional
 
@@ -417,4 +418,38 @@ async def update_generation_progress(generation_id: int, progress_data: Progress
         raise HTTPException(status_code=404, detail=f"Image generation {generation_id} not found")
     except Exception as e:
         logger.error(f"Error updating generation progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/processing/queue-status")
+async def get_processing_queue_status():
+    """Get processing queue status from processing service"""
+    try:
+        # Make request to processing API with timeout
+        response = requests.get(
+            f"{AUDIO_PROCESSOR_URL}/queue-status",
+            timeout=3.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout getting queue status from processing API")
+        raise HTTPException(
+            status_code=504,
+            detail="Processing service timeout - service may be overloaded or unavailable"
+        )
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Connection error getting queue status from processing API")
+        raise HTTPException(
+            status_code=503,
+            detail="Processing service unavailable - service may be stopped"
+        )
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error getting queue status from processing API: {str(e)}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Error communicating with processing service: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error getting queue status: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

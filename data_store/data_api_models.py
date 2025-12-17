@@ -122,3 +122,33 @@ class ProcessingStatusResponse(BaseModel):
     overall_status: str  # "pending" | "transcribing" | "generating_prompts" | "generating_images" | "completed" | "failed"
     created_date: str
     updated_date: str
+
+
+class QueueInfo(BaseModel):
+    size: int
+    max_size: int
+    is_active: bool
+
+
+class ThreadStatus(BaseModel):
+    recording_thread_alive: bool
+    image_thread_alive: bool
+
+
+class ProcessingMetrics(BaseModel):
+    total_processed: int
+    avg_time_seconds: float
+
+
+class QueueStatusSummary(BaseModel):
+    total_queued: int
+    has_active_work: bool
+
+
+class QueueStatusResponse(BaseModel):
+    service_status: str
+    is_active: bool
+    queues: Dict[str, QueueInfo]
+    threads: ThreadStatus
+    metrics: Dict[str, ProcessingMetrics]
+    summary: QueueStatusSummary
