@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PublicChannels>
+  <Channel Name="ActiveAudio" Type="Spread [Collections]&lt;AudioSignal [Audio]&gt;" />
+  <Channel Name="ActiveId" Type="Integer32 [Primitive]" />
+  <Channel Name="AudioMeter" Type="Float32 [Primitive]" />
+  <Channel Name="IsPlaying" Type="Boolean [Primitive]" />
+  <Channel Name="IsRecordingModeEnabled" Type="Boolean [Primitive]" />
+  <Channel Name="NewImageLoadedEvent" Type="Integer32 [Primitive]" />
+  <Channel Name="NewRecordingCreatedEvent" Type="Integer32 [Primitive]" />
+  <Channel Name="PassedRecordingEvent" Type="AudioRecording [Branches.ConversationTree.DataAccess]" />
+  <Channel Name="Play3dOrigin" Type="Vector3 [3D]" />
+  <Channel Name="PlayLoopedEvent" Type="Unit [Reactive]" />
+  <Channel Name="PlayPosition" Type="Float32 [Primitive]" />
+  <Channel Name="RecordingTimeout" Type="Unit [Reactive]" />
+</PublicChannels>
