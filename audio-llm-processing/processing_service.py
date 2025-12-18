@@ -86,7 +86,8 @@ class AudioProcessingService:
             self.new_recording_queue.put(None)  # Sentinel to stop the thread
             self.recording_thread.join()
         if self.image_thread:
-            self.image_generation_queue.put((float('inf'), None))  # Sentinel to stop the thread
+            # Sentinel with highest priority tuple to ensure it's processed last
+            self.image_generation_queue.put(((float('inf'), float('inf'), float('inf')), None))  # Sentinel to stop the thread
             self.image_thread.join()
         self.whisper_model = None
 
@@ -137,13 +138,15 @@ class AudioProcessingService:
                     break
 
                 recording_id, prompt, image_generation_id = item
+                # Extract index from priority tuple: (tier, -recording_id, index)
+                tier, neg_recording_id, index = priority
                 start_time = time.time()
                 logger.info(
-                    f"Generating image for recording {recording_id}, prompt index {priority}"
+                    f"Generating image for recording {recording_id}, prompt index {index} (tier {tier})"
                 )
                 try:
-                    self._generate_and_store_image(recording_id, prompt, image_generation_id, priority)
-                    logger.info(f"Successfully generated image for {recording_id}, prompt index {priority}")
+                    self._generate_and_store_image(recording_id, prompt, image_generation_id, index)
+                    logger.info(f"Successfully generated image for {recording_id}, prompt index {index}")
                 except Exception as e:
                     logger.error(
                         f"Error generating image for {recording_id}, prompt index {priority}: {str(e)}",
@@ -285,8 +288,13 @@ class AudioProcessingService:
         # Create pending image generations and queue each prompt individually
         image_generation_id_prompt_pairs = self._create_pending_image_generations(recording_id, prompts)
         for index, (image_generation_id, prompt) in enumerate(image_generation_id_prompt_pairs):
-            # Queue each prompt with its index as priority
-            self.image_generation_queue.put((index, (recording_id, prompt, image_generation_id)))
+            # Priority logic:
+            # - First 3 generations per recording (index < 3): tier 0, prioritized by recording ID (newer first)
+            # - After first 3 (index >= 3): tier 1, interleaved by recording ID
+            # Using -int(recording_id) so newer recordings (higher ID) have lower priority values (processed first)
+            tier = 0 if index < 3 else 1
+            priority = (tier, -int(recording_id), index)
+            self.image_generation_queue.put((priority, (recording_id, prompt, image_generation_id)))
 
     def _transcribe_audio(self, source_file: str) -> str:
         result = self.whisper_model.transcribe(
