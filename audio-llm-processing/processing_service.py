@@ -275,7 +275,9 @@ class AudioProcessingService:
         parent_context = self._get_parent_context(recording_id)
         if parent_context:
             logger.info(f"Found parent context for {recording_id}")
+            logger.info(f"Parent context content: {parent_context}")
             transcription = f"{parent_context}\n\nCurrent recording: {transcription}"
+            logger.info(f"Combined transcription for prompt generation: {transcription}")
 
         # Generate image prompts
         prompt_count = math.ceil(duration / SECONDS_PER_PROMPT)
